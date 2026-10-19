@@ -1,0 +1,26 @@
+{
+	admin off
+}
+
+:{$PORT:10000} {
+	handle /healthz {
+		respond "ok" 200
+	}
+
+	# Opening /?key=<MPT_ACCESS_KEY> once stores the key in a cookie. A cookie (unlike
+	# basic auth) is also sent on Streamlit's WebSocket in every browser, including Safari.
+	@login query key={$MPT_ACCESS_KEY}
+	handle @login {
+		header Set-Cookie "mpt_key={$MPT_ACCESS_KEY}; Path=/; Max-Age=31536000; HttpOnly; Secure; SameSite=Lax"
+		redir * / 302
+	}
+
+	@authorized header Cookie *mpt_key={$MPT_ACCESS_KEY}*
+	handle @authorized {
+		reverse_proxy 127.0.0.1:8501
+	}
+
+	handle {
+		respond "Unauthorized: open this app with its ?key= link." 401
+	}
+}
