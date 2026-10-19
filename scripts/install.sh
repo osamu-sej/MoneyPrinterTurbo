@@ -39,6 +39,8 @@ echo "導入済み: $("$MPT_DIR/.venv/bin/mpt" --version)"
 
 mkdir -p "$MPT_DIR/codex_overlay"
 cp -R "$REPO_DIR/codex_overlay/." "$MPT_DIR/codex_overlay/"
+cp "$REPO_DIR/scripts/serve-private.sh" "$MPT_DIR/serve-private.sh"
+chmod +x "$MPT_DIR/serve-private.sh"
 MPT_HOME="$MPT_DIR/home" PYTHONPATH="$MPT_DIR/codex_overlay" MPT_CODEX_APP_SERVER=1 \
   "$MPT_DIR/.venv/bin/python" -c \
   'from app.config import config; config.app["llm_provider"] = "codex_app_server"; config.save_config()'
@@ -87,3 +89,4 @@ if [ "$(uname)" = Darwin ]; then
 fi
 
 echo "データ保存先（MPT_HOME）: $MPT_DIR/home  生成動画: $MPT_DIR/home/storage/tasks/<task-id>/"
+echo "プライベート遠隔利用（Tailscale導入後）: bash $MPT_DIR/serve-private.sh"

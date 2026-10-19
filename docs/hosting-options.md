@@ -11,10 +11,18 @@
 
 1. `bash scripts/install.sh` で `~/mpt` に導入し、Codex CLIでログインする。
 2. `~/Applications/MoneyPrinterTurbo.app` でWebUIを起動する。WebUIは `127.0.0.1:8501` にだけバインドする。Mac側で動画生成し、動画と設定を `~/mpt/home` に保存する。
-3. 別端末から使う場合は、Macと利用端末を同じTailscaleネットワークに接続し、リポジトリから `bash scripts/serve-private.sh` を実行する。Tailscale ServeのHTTPS URLはネットワーク内の許可端末向け。共有中はWebUIのターミナルとServeのターミナルを開いておく。
+3. 別端末から使う場合は、Macと利用端末を同じTailscaleネットワークに接続し、導入時にコピーされた `bash ~/mpt/serve-private.sh` を実行する。Tailscale ServeのHTTPS URLはネットワーク内の許可端末向け。共有中はWebUIのターミナルとServeのターミナルを開いておく。
 4. 利用後はServe側を `Ctrl+C` で止める。Macをスリープさせると遠隔利用も止まる。
 
 TailscaleはこのMacに未導入であり、実際の遠隔接続試験は未実施。個人向け無料プランは非商用利用向けなので、業務利用する場合は契約条件を確認する。
+
+### このMacでの受入結果（2026-10-20）
+
+- `~/mpt` と `~/Applications/MoneyPrinterTurbo.app` を導入し、`config.toml` のプロバイダーが `codex_app_server` であることを確認した。
+- WebUIは `127.0.0.1:8501` のみで待ち受け、`/` と `/_stcore/health` はHTTP 200だった。
+- Codex app serverへの短い生成と、`mpt cli --stop-at script` の台本生成が成功した。
+- ローカル素材・音声を使った3秒の1080×1920 MP4を生成し、映像とAAC音声を検証した。検証ファイルは `/private/tmp/mpt-codex-acceptance` に置き、利用者の動画保存先には加えていない。
+- 導入済み `serve-private.sh` は、Tailscale ServeのプライベートHTTPS転送コマンドをスタブで確認した。実際のTailscale接続は未確認。
 
 ## 公開URLが必須の場合
 
