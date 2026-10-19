@@ -78,7 +78,7 @@ if %errorlevel%==0 (
   start "" http://127.0.0.1:8501
   exit /b 0
 )
-".venv\Scripts\mpt.exe" webui --port 8501
+".venv\Scripts\mpt.exe" webui --host 127.0.0.1 --port 8501
 '@ | Set-Content -Path $Bat -Encoding ASCII
 Write-Host "Launcher: $Bat"
 

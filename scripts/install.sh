@@ -72,7 +72,7 @@ if curl -fsS "$URL/_stcore/health" >/dev/null 2>&1; then
   exit 0
 fi
 ulimit -n 10240 2>/dev/null || true
-exec ./.venv/bin/mpt webui --port 8501
+exec ./.venv/bin/mpt webui --host 127.0.0.1 --port 8501
 EOF
 chmod +x "$LAUNCHER"
 echo "ランチャー: $LAUNCHER"
