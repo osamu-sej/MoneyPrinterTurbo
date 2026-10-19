@@ -1,6 +1,9 @@
 # MoneyPrinterTurbo (official PyPI package mpt) WebUI for Render, behind an access-key gate.
-# Needs about 1GB of RAM while rendering a video (measured peak 680MB), so use a 2GB plan.
+# Rendering a video peaks around 1GB of RAM on top of the idle ~260MB, so use a 2GB plan.
 FROM caddy:2.8 AS caddy
+# The image's caddy carries a cap_net_bind_service file capability, and Render refuses to
+# exec such binaries ("Operation not permitted"). A plain copy drops the capability xattr.
+RUN cp /usr/bin/caddy /caddy
 
 FROM python:3.11-slim
 
@@ -17,7 +20,7 @@ RUN apt-get update \
 
 RUN pip install mpt==1.3.8
 
-COPY --from=caddy /usr/bin/caddy /usr/local/bin/caddy
+COPY --from=caddy /caddy /usr/local/bin/caddy
 COPY deploy/ /app/deploy/
 
 CMD ["bash", "/app/deploy/entrypoint.sh"]

@@ -8,6 +8,11 @@ if [[ ! "${MPT_ACCESS_KEY:-}" =~ ^[A-Za-z0-9_-]{16,}$ ]]; then
   exit 1
 fi
 
+# Route every ffmpeg call (mpt and MoviePy both honor IMAGEIO_FFMPEG_EXE) through the preset wrapper.
+# Resolve the bundled binary first, while IMAGEIO_FFMPEG_EXE cannot point back at the wrapper.
+FFMPEG_REAL="$(env -u IMAGEIO_FFMPEG_EXE python -c 'import imageio_ffmpeg; print(imageio_ffmpeg.get_ffmpeg_exe())')"
+export FFMPEG_REAL IMAGEIO_FFMPEG_EXE=/app/deploy/ffmpeg-lowmem.sh
+
 python /app/deploy/seed_config.py
 mpt webui --host 127.0.0.1 --port 8501 --headless &
 caddy run --config /app/deploy/Caddyfile --adapter caddyfile &
