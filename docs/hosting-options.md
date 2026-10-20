@@ -14,7 +14,7 @@
 3. 別端末から使う場合は、Macと利用端末を同じTailscaleネットワークに接続し、導入時にコピーされた `bash ~/mpt/serve-private.sh` を実行する。Tailscale ServeのHTTPS URLはネットワーク内の許可端末向け。共有中はWebUIのターミナルとServeのターミナルを開いておく。
 4. 利用後はServe側を `Ctrl+C` で止める。Macをスリープさせると遠隔利用も止まる。
 
-このMacにはTailscale公式パッケージを導入し、本人のtailnetへの接続を確認した。Tailscale Serveは管理画面での有効化を待っており、別端末からの接続試験は未実施。個人向け無料プランは非商用利用向けなので、業務利用する場合は契約条件を確認する。
+このMacにはTailscale公式パッケージを導入し、本人のtailnetへの接続を確認した。Tailscale Serveは有効化済みで、このMacからtailnet内HTTPS経由の応答を確認した。別端末からの接続試験は未実施。個人向け無料プランは非商用利用向けなので、業務利用する場合は契約条件を確認する。
 
 ### このMacでの受入結果（2026-10-20）
 
@@ -23,7 +23,7 @@
 - Codex app serverへの短い生成と、`mpt cli --stop-at script` の台本生成が成功した。
 - ローカル素材・音声を使った3秒の1080×1920 MP4を生成し、映像とAAC音声を検証した。検証ファイルは `/private/tmp/mpt-codex-acceptance` に置き、利用者の動画保存先には加えていない。
 - Tailscale公式インストーラーの署名とSHA-256を確認して導入した。CLIの `tailscale status` でこのMacの接続を確認した。
-- 導入済み `serve-private.sh` はプライベートHTTPS転送コマンドまで実行できた。現在はtailnet管理画面でServeの有効化待ちであり、転送と別端末からの接続は未確認。
+- 導入済み `serve-private.sh` でプライベートHTTPS転送を起動した。`tailscale serve status --json` でローカルWebUIへの転送を確認し、tailnet内HTTPS URLの `/_stcore/health` はHTTP 200を返した。別端末からの接続は未確認。
 
 ## 公開URLが必須の場合
 
