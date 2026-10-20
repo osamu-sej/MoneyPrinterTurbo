@@ -44,6 +44,8 @@ if (-not (Test-Path $VenvPy)) {
 & $VenvPy -m pip install --upgrade pip 'mpt==1.3.8'
 if ($LASTEXITCODE -ne 0) { Fail 'pip install mpt failed.' }
 & (Join-Path $MptDir '.venv\Scripts\mpt.exe') --version
+& $VenvPy (Join-Path $PSScriptRoot 'install-locale.py')
+if ($LASTEXITCODE -ne 0) { Fail 'Japanese UI installation failed.' }
 
 $Overlay = Join-Path $MptDir 'codex_overlay'
 New-Item -ItemType Directory -Force -Path $Overlay | Out-Null
@@ -51,7 +53,7 @@ Copy-Item -Path (Join-Path $PSScriptRoot '..\codex_overlay\*') -Destination $Ove
 $env:MPT_HOME = Join-Path $MptDir 'home'
 $env:PYTHONPATH = $Overlay
 $env:MPT_CODEX_APP_SERVER = '1'
-& $VenvPy -c 'from app.config import config; config.app["llm_provider"] = "codex_app_server"; config.save_config()'
+& $VenvPy -c 'from app.config import config; config.app["llm_provider"] = "codex_app_server"; config.ui["language"] = "ja"; config.save_config()'
 if ($LASTEXITCODE -ne 0) { Fail 'Codex provider configuration failed.' }
 
 # Works without a system ffmpeg as long as the imageio-ffmpeg binary bundled with mpt runs

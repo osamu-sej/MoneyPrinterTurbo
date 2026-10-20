@@ -15,7 +15,7 @@ def install():
 
     provider = llm_provider.LLMProviderSpec(
         "codex_app_server",
-        "Codex app server (ChatGPT login)",
+        "Codex（ChatGPTログイン）",
         adapter="codex_app_server",
         requires_api_key=False,
         show_api_key=False,

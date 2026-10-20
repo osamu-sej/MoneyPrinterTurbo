@@ -7,12 +7,12 @@
 - Renderの `1c-2g`（旧Standard）は1 CPU / 2 GB RAM。現行のRender Docker版にCodex app serverは同梱していないため、プラン変更だけではCodex連携に移行しない。
 - OpenAIのChatGPTプランを使ったCodex連携は、現時点の公式案内ではローカルで動くオープンソース／個人プロジェクト向け。リモートホスト型で提供する場合は利用申請が必要。MacのCodexログインファイルをRenderに複製しない。
 
-## 推奨: Macで生成、必要時だけプライベートに遠隔利用
+## 採用: Macで生成し、Tailscale経由でプライベートに遠隔利用
 
 1. `bash scripts/install.sh` で `~/mpt` に導入し、Codex CLIでログインする。
 2. `~/Applications/MoneyPrinterTurbo.app` でWebUIを起動する。WebUIは `127.0.0.1:8501` にだけバインドする。Mac側で動画生成し、動画と設定を `~/mpt/home` に保存する。
-3. 別端末から使う場合は、Macと利用端末を同じTailscaleネットワークに接続し、導入時にコピーされた `bash ~/mpt/serve-private.sh` を実行する。Tailscale ServeのHTTPS URLはネットワーク内の許可端末向け。共有中はWebUIのターミナルとServeのターミナルを開いておく。
-4. 利用後はServe側を `Ctrl+C` で止める。Macをスリープさせると遠隔利用も止まる。
+3. 常時利用するMac miniでは `bash scripts/install-macos-launchagent.sh` でWebUIをログイン時に自動起動し、`tailscale serve --bg --https=443 http://127.0.0.1:8501` でtailnet内にHTTPS転送する。`--bg` はTailscale再起動後も転送を再開する。
+4. Windows端末を同じtailnetに接続し、Mac miniのTailscale HTTPS URLを開く。Mac miniがスリープすると遠隔利用は止まる。今回のMac miniはAC電源時のシステムスリープが無効だが、電源断・ログアウト時の利用は保証しない。
 
 このMacにはTailscale公式パッケージを導入し、本人のtailnetへの接続を確認した。Tailscale Serveは有効化済みで、このMacからtailnet内HTTPS経由の応答を確認した。別端末からの接続試験は未実施。個人向け無料プランは非商用利用向けなので、業務利用する場合は契約条件を確認する。
 
@@ -24,7 +24,8 @@
 - Codex app serverへの短い生成と、`mpt cli --stop-at script` の台本生成が成功した。
 - ローカル素材・音声を使った3秒の1080×1920 MP4を生成し、映像とAAC音声を検証した。検証ファイルは `/private/tmp/mpt-codex-acceptance` に置き、利用者の動画保存先には加えていない。
 - Tailscale公式インストーラーの署名とSHA-256を確認して導入した。CLIの `tailscale status` でこのMacの接続を確認した。
-- 導入済み `serve-private.sh` でプライベートHTTPS転送を起動した。`tailscale serve status --json` でローカルWebUIへの転送を確認し、tailnet内HTTPS URLの `/_stcore/health` はHTTP 200を返した。別端末からの接続は未確認。
+- WebUIの日本語訳603件を導入し、既定言語を日本語に設定した。更新前から開いていた英語タブは再接続時に英語選択を再保存したため、そのタブでは右上の言語メニューから日本語を選ぶ必要がある。
+- `launchctl` でWebUIの自動起動とローカル待ち受けを確認した。`tailscale serve --bg` でプライベートHTTPS転送を常駐させ、`tailscale serve status --json` でローカルWebUIへの転送を確認した。以前の接続試験ではtailnet内HTTPS URLの `/_stcore/health` がHTTP 200を返した。Windows端末からの接続は未確認。
 
 ## 公開URLが必須の場合
 
