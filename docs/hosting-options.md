@@ -5,7 +5,7 @@
 - Render公式の無料Webサービスは **0.1 CPU / 512 MB RAM**。15分無通信で停止し、停止・再起動・再デプロイでローカルの生成ファイルは失われる。無料枠には永続ディスクもない。現在の公開サービス `/healthz` は2026-10-20に HTTP 200 を返したが、これだけでは動画生成成功や契約プランは確認できない。Renderのプラン・メトリクス画面には今回アクセスできなかった。
 - `HANDOFF.md` には従来の30秒・1080×1920動画の測定値として、待機時約260MB、`ultrafast` でも動画生成時約540MB（WebUI分は別）と記録されている。この数値は今回再測定していない。測定値の最小でも無料枠の512MBを超えるため、現行のモノリス構成では生成を無料枠に収められない。
 - Renderの `1c-2g`（旧Standard）は1 CPU / 2 GB RAM。現行のRender Docker版にCodex app serverは同梱していないため、プラン変更だけではCodex連携に移行しない。
-- OpenAIのChatGPTプランを使ったCodex連携は、現時点の公式案内ではローカルで動くオープンソース／個人プロジェクト向け。リモートホスト型で提供する場合は利用申請が必要。MacのCodexログインファイルをRenderに複製しない。
+- OpenAIの公式案内では、ローカルまたはオープンソースのアプリはCodex app-server認証を継続利用できる。一方、商用・ホスト型サービスへの同方式の提供は認められていない。本人のMac miniで動く個人用アプリを本人のiPhone・Windowsから操作する今回の構成を、他者向けのホスト型サービスと一律に扱わない。MacのCodexログインファイルをRenderに複製しない。
 
 ## 採用: Macで生成し、Tailscale経由でプライベートに遠隔利用
 
@@ -15,6 +15,8 @@
 4. WindowsまたはiPhoneを同じtailnetに接続し、Mac miniのTailscale HTTPS URLを開く。Mac miniがスリープすると遠隔利用は止まる。今回のMac miniはAC電源時のシステムスリープが無効だが、電源断・ログアウト時の利用は保証しない。
 
 このMacにはTailscale公式パッケージを導入し、本人のtailnetへの接続を確認した。Tailscale Serveは有効化済みで、このMacからtailnet内HTTPS経由の応答を確認した。Windows・iPhone実機からの接続試験は未実施。個人向け無料プランは非商用利用向けなので、業務利用する場合は契約条件を確認する。
+
+Codexへの認証はMac mini上で行い、外出先のブラウザがCodexへ直接ログインする必要はない。TailscaleのログインはMac miniのWeb画面への接続を本人の端末に限定するための手段であり、Codex app-server自体の必須条件ではない。公式のリモートapp-server機能はCodexクライアント用であり、動画生成WebUIの公開や端末認証を代行しない。iPhoneからVPNアプリなしで使う場合は、WebUI用の別のHTTPS入口と本人限定のアクセス制御が必要になる。
 
 ### このMacでの受入結果（2026-10-20）
 
@@ -36,5 +38,6 @@ Renderでの動画生成には少なくとも2GB級プランを候補とし、�
 - [Render Compute Plans](https://render.com/docs/compute-plans)
 - [Render Free services](https://render.com/docs/free)
 - [OpenAI Sign in with ChatGPTの利用範囲](https://learn.chatgpt.com/cookbook/articles/sign-in-with-chatgpt#usage-policy-and-terms)
+- [Codex App Serverの認証とリモート接続](https://learn.chatgpt.com/docs/app-server)
 - [Tailscale Serve](https://tailscale.com/docs/reference/tailscale-cli/serve)
 - [Tailscale pricing](https://tailscale.com/pricing)
