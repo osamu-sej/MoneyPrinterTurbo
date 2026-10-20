@@ -1,0 +1,37 @@
+/* mpt-mobile-v1: keep the settings readable on iPhone portrait and landscape. */
+@media (min-width: 641px) and (max-width: 900px) {
+    div[class*="st-key-main_settings_grid"]
+        > div[data-testid="stLayoutWrapper"]
+        > div[data-testid="stHorizontalBlock"] {
+        flex-wrap: wrap !important;
+    }
+
+    div[class*="st-key-main_settings_grid"]
+        > div[data-testid="stLayoutWrapper"]
+        > div[data-testid="stHorizontalBlock"]
+        > div[data-testid="stColumn"] {
+        flex: 1 1 100% !important;
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+}
+
+@media (max-width: 640px) {
+    div[data-testid="stMainBlockContainer"] {
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+    }
+
+    div[class*="st-key-top_bar_actions"] [data-testid="stSelectbox"] {
+        max-width: 9rem !important;
+    }
+
+    div[data-testid="stMainBlockContainer"] input,
+    div[data-testid="stMainBlockContainer"] textarea {
+        font-size: 16px !important;
+    }
+
+    div[class*="st-key-generate_video_button"] button {
+        min-height: 44px !important;
+    }
+}

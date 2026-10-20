@@ -25,6 +25,7 @@ TIPS_ANCHOR = '    tips_language = ui_language if ui_language in {"zh", "en"} el
 TIPS_INSERTION = '    tips_language = ui_language if ui_language in {"zh", "en", "ja"} else "en"'
 REGION_ANCHOR = 'prefer_international=tips_language == "en"'
 REGION_INSERTION = 'prefer_international=tips_language != "zh"'
+MOBILE_STYLE_MARKER = "/* mpt-mobile-v1:"
 
 
 def patch_text(source: str) -> str:
@@ -47,21 +48,39 @@ def patch_text(source: str) -> str:
     return source
 
 
+def patch_style(source: str, mobile_style: str) -> str:
+    if source.count(MOBILE_STYLE_MARKER) == 1:
+        return source
+    if source.count(MOBILE_STYLE_MARKER) != 0:
+        raise ValueError("mpt mobile stylesheet marker is duplicated")
+    return source.rstrip() + "\n\n" + mobile_style.strip() + "\n"
+
+
 def main() -> None:
     if distribution("mpt").version != "1.3.8":
         raise SystemExit("setup checklist requires mpt==1.3.8")
     target = Path(distribution("mpt").locate_file("webui/Main.py"))
     source = target.read_text(encoding="utf-8")
     patched = patch_text(source)
+    style_target = target.with_name("styles.css")
+    style_source = style_target.read_text(encoding="utf-8")
+    mobile_style = (Path(__file__).resolve().parent.parent / "webui" / "mobile.css").read_text(encoding="utf-8")
+    patched_style = patch_style(style_source, mobile_style)
     if sys.argv[1:] == ["--check"]:
         print("WebUI setup checklist patch is compatible")
     elif len(sys.argv) != 1:
         raise SystemExit("usage: patch-webui.py [--check]")
     elif source != patched:
         target.write_text(patched, encoding="utf-8")
-        print("WebUI setup checklist installed")
+        if style_source != patched_style:
+            style_target.write_text(patched_style, encoding="utf-8")
+        print("WebUI usability and mobile layout installed")
     else:
-        print("WebUI setup checklist already installed")
+        if style_source != patched_style:
+            style_target.write_text(patched_style, encoding="utf-8")
+            print("WebUI mobile layout installed")
+        else:
+            print("WebUI usability and mobile layout already installed")
 
 
 if __name__ == "__main__":

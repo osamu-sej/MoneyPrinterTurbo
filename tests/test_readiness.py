@@ -66,6 +66,15 @@ class WebUIPatchTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             patch_text("unknown layout")
 
+    def test_mobile_style_patch_is_idempotent(self):
+        module = runpy.run_path(str(ROOT / "scripts" / "patch-webui.py"))
+        mobile_style = (ROOT / "webui" / "mobile.css").read_text(encoding="utf-8")
+        patch_style = module["patch_style"]
+        original = "body { color: black; }\n"
+        patched = patch_style(original, mobile_style)
+        self.assertIn("mpt-mobile-v1", patched)
+        self.assertEqual(patch_style(patched, mobile_style), patched)
+
 
 if __name__ == "__main__":
     unittest.main()

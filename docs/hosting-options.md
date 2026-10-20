@@ -12,9 +12,9 @@
 1. `bash scripts/install.sh` で `~/mpt` に導入し、Codex CLIでログインする。
 2. `~/Applications/MoneyPrinterTurbo.app` でWebUIを起動する。WebUIは `127.0.0.1:8501` にだけバインドする。Mac側で動画生成し、動画と設定を `~/mpt/home` に保存する。
 3. 常時利用するMac miniでは `bash scripts/install-macos-launchagent.sh` でWebUIをログイン時に自動起動し、`tailscale serve --bg --https=443 http://127.0.0.1:8501` でtailnet内にHTTPS転送する。`--bg` はTailscale再起動後も転送を再開する。
-4. Windows端末を同じtailnetに接続し、Mac miniのTailscale HTTPS URLを開く。Mac miniがスリープすると遠隔利用は止まる。今回のMac miniはAC電源時のシステムスリープが無効だが、電源断・ログアウト時の利用は保証しない。
+4. WindowsまたはiPhoneを同じtailnetに接続し、Mac miniのTailscale HTTPS URLを開く。Mac miniがスリープすると遠隔利用は止まる。今回のMac miniはAC電源時のシステムスリープが無効だが、電源断・ログアウト時の利用は保証しない。
 
-このMacにはTailscale公式パッケージを導入し、本人のtailnetへの接続を確認した。Tailscale Serveは有効化済みで、このMacからtailnet内HTTPS経由の応答を確認した。別端末からの接続試験は未実施。個人向け無料プランは非商用利用向けなので、業務利用する場合は契約条件を確認する。
+このMacにはTailscale公式パッケージを導入し、本人のtailnetへの接続を確認した。Tailscale Serveは有効化済みで、このMacからtailnet内HTTPS経由の応答を確認した。Windows・iPhone実機からの接続試験は未実施。個人向け無料プランは非商用利用向けなので、業務利用する場合は契約条件を確認する。
 
 ### このMacでの受入結果（2026-10-20）
 
