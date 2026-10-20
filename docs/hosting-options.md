@@ -24,7 +24,7 @@
 - Codex app serverへの短い生成と、`mpt cli --stop-at script` の台本生成が成功した。
 - ローカル素材・音声を使った3秒の1080×1920 MP4を生成し、映像とAAC音声を検証した。検証ファイルは `/private/tmp/mpt-codex-acceptance` に置き、利用者の動画保存先には加えていない。
 - Tailscale公式インストーラーの署名とSHA-256を確認して導入した。CLIの `tailscale status` でこのMacの接続を確認した。
-- WebUIの日本語訳603件を導入し、既定言語を日本語に設定した。更新前から開いていた英語タブは再接続時に英語選択を再保存したため、そのタブでは右上の言語メニューから日本語を選ぶ必要がある。
+- WebUIの日本語訳603件を導入し、既定言語を日本語に設定した。更新前から開いていた英語タブが再接続時に英語選択を再保存する問題は、保存済み言語を初回描画時に反映するパッチで修正した。
 - `launchctl` でWebUIの自動起動とローカル待ち受けを確認した。`tailscale serve --bg` でプライベートHTTPS転送を常駐させ、`tailscale serve status --json` でローカルWebUIへの転送を確認した。以前の接続試験ではtailnet内HTTPS URLの `/_stcore/health` がHTTP 200を返した。Windows端末からの接続は未確認。
 
 ## 公開URLが必須の場合

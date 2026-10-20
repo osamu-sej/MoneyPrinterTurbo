@@ -42,6 +42,7 @@ mkdir -p "$MPT_DIR/codex_overlay"
 cp -R "$REPO_DIR/codex_overlay/." "$MPT_DIR/codex_overlay/"
 cp "$REPO_DIR/scripts/serve-private.sh" "$MPT_DIR/serve-private.sh"
 chmod +x "$MPT_DIR/serve-private.sh"
+"$MPT_DIR/.venv/bin/python" "$REPO_DIR/scripts/patch-webui.py"
 MPT_HOME="$MPT_DIR/home" PYTHONPATH="$MPT_DIR/codex_overlay" MPT_CODEX_APP_SERVER=1 \
   "$MPT_DIR/.venv/bin/python" -c \
   'from app.config import config; config.app["llm_provider"] = "codex_app_server"; config.ui["language"] = "ja"; config.save_config()'

@@ -50,6 +50,8 @@ if ($LASTEXITCODE -ne 0) { Fail 'Japanese UI installation failed.' }
 $Overlay = Join-Path $MptDir 'codex_overlay'
 New-Item -ItemType Directory -Force -Path $Overlay | Out-Null
 Copy-Item -Path (Join-Path $PSScriptRoot '..\codex_overlay\*') -Destination $Overlay -Recurse -Force
+& $VenvPy (Join-Path $PSScriptRoot 'patch-webui.py')
+if ($LASTEXITCODE -ne 0) { Fail 'WebUI setup checklist installation failed.' }
 $env:MPT_HOME = Join-Path $MptDir 'home'
 $env:PYTHONPATH = $Overlay
 $env:MPT_CODEX_APP_SERVER = '1'
