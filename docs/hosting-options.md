@@ -19,7 +19,8 @@
 ### このMacでの受入結果（2026-10-20）
 
 - `~/mpt` と `~/Applications/MoneyPrinterTurbo.app` を導入し、`config.toml` のプロバイダーが `codex_app_server` であることを確認した。
-- WebUIは `127.0.0.1:8501` のみで待ち受け、`/` と `/_stcore/health` はHTTP 200だった。
+- WebUIは `127.0.0.1:8501` のみで待ち受け、`/` と `/_stcore/health` はHTTP 200だった。ただし、この応答だけではStreamlitの画面描画成功は確認できない。
+- Codexの制限付きプロセスから起動したWebUIは、初回描画時に `~/mpt/home/resource` の作成が拒否された。制限のないMacのユーザー権限で再起動し、同じ資源配置処理で37ファイルの作成を確認した。再読み込み後の画面表示は利用者の確認待ち。
 - Codex app serverへの短い生成と、`mpt cli --stop-at script` の台本生成が成功した。
 - ローカル素材・音声を使った3秒の1080×1920 MP4を生成し、映像とAAC音声を検証した。検証ファイルは `/private/tmp/mpt-codex-acceptance` に置き、利用者の動画保存先には加えていない。
 - Tailscale公式インストーラーの署名とSHA-256を確認して導入した。CLIの `tailscale status` でこのMacの接続を確認した。
