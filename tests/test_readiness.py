@@ -1,14 +1,20 @@
 import runpy
 import sys
+import tempfile
 import unittest
+from io import BytesIO
 from pathlib import Path
 from unittest.mock import patch
+
+from PIL import Image
 
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "codex_overlay"))
 
-from mpt_codex.readiness import codex_logged_in, setup_issues
+from mpt_codex.readiness import (
+    codex_logged_in, local_material_resolution_issues, setup_issues,
+)
 
 
 class SetupIssuesTests(unittest.TestCase):
@@ -47,6 +53,29 @@ class SetupIssuesTests(unittest.TestCase):
         with patch("mpt_codex.readiness.subprocess.run", side_effect=OSError):
             self.assertFalse(codex_logged_in("/usr/bin/codex"))
 
+    def test_small_uploaded_image_is_rejected_before_generation(self):
+        image_bytes = BytesIO()
+        Image.new("RGB", (200, 154)).save(image_bytes, format="PNG")
+        image_bytes.name = "thumbnail.png"
+        issues = local_material_resolution_issues([image_bytes], [])
+        self.assertEqual(len(issues), 1)
+        self.assertIn("200×154px", issues[0])
+
+    def test_sufficient_uploaded_image_is_accepted(self):
+        image_bytes = BytesIO()
+        Image.new("RGB", (480, 480)).save(image_bytes, format="PNG")
+        image_bytes.name = "original.png"
+        self.assertEqual(local_material_resolution_issues([image_bytes], []), [])
+
+    def test_saved_small_image_is_rejected_on_next_attempt(self):
+        with tempfile.TemporaryDirectory() as directory:
+            image_path = Path(directory) / "saved.png"
+            Image.new("RGB", (200, 154)).save(image_path)
+            with patch("app.utils.utils.storage_dir", return_value=directory):
+                issues = local_material_resolution_issues([], [{"url": str(image_path)}])
+        self.assertEqual(len(issues), 1)
+        self.assertIn("200×154px", issues[0])
+
 
 class WebUIPatchTests(unittest.TestCase):
     def test_patch_is_idempotent_and_uses_exact_anchor(self):
@@ -55,10 +84,12 @@ class WebUIPatchTests(unittest.TestCase):
         language_anchor = module["LANGUAGE_ANCHOR"]
         tips_anchor = module["TIPS_ANCHOR"]
         region_anchor = module["REGION_ANCHOR"]
+        button_anchor = module["BUTTON_ANCHOR"]
         patch_text = module["patch_text"]
-        original = f"before\n{tips_anchor}\n{region_anchor}\n{region_anchor}\n{tips_anchor}\n{language_anchor}\n{anchor}after\n"
+        original = f"before\n{tips_anchor}\n{region_anchor}\n{region_anchor}\n{tips_anchor}\n{language_anchor}\n{anchor}{button_anchor}after\n"
         patched = patch_text(original)
         self.assertIn("render_readiness", patched)
+        self.assertIn("disabled=local_resolution_blocked", patched)
         self.assertIn("_mpt_language_synced", patched)
         self.assertEqual(patched.count('"ja"} else "en"'), 2)
         self.assertEqual(patched.count('prefer_international=tips_language != "zh"'), 2)

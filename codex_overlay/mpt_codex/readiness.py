@@ -4,6 +4,8 @@ import os
 import shutil
 import subprocess
 import time
+from io import BytesIO
+from pathlib import Path
 
 
 MATERIAL_KEYS = {
@@ -12,6 +14,46 @@ MATERIAL_KEYS = {
     "coverr": ("coverr_api_keys", "Coverr"),
     "wavespeed": ("wavespeed_api_keys", "WaveSpeed"),
 }
+MIN_LOCAL_MATERIAL_EDGE = 470  # mpt==1.3.8 allows 10px tolerance below 480px.
+LOCAL_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp"}
+
+
+def local_material_resolution_issues(uploaded_files, saved_materials) -> list[str]:
+    """Check selected images before the task spends time generating audio."""
+    from PIL import Image
+
+    issues = []
+    if uploaded_files:
+        images = (
+            (Path(item.name).name, BytesIO(item.getvalue()))
+            for item in uploaded_files
+            if Path(item.name).suffix.lower() in LOCAL_IMAGE_EXTENSIONS
+        )
+    else:
+        images = (
+            ("前回アップロードした画像", str(item.get("url") or ""))
+            for item in saved_materials or []
+            if Path(str(item.get("url") or "")).suffix.lower() in LOCAL_IMAGE_EXTENSIONS
+        )
+
+    for label, source in images:
+        try:
+            if not uploaded_files:
+                from app.utils import file_security, utils
+
+                source = file_security.resolve_path_within_directory(
+                    utils.storage_dir("local_videos", create=False), source
+                )
+            with Image.open(source) as image:
+                width, height = image.size
+        except (OSError, ValueError):
+            issues.append(f"{label} を読み取れません。画像を選び直してください。")
+            continue
+        if width < MIN_LOCAL_MATERIAL_EDGE or height < MIN_LOCAL_MATERIAL_EDGE:
+            issues.append(
+                f"{label} は {width}×{height}px です。縦横とも480px以上の元画像を選んでください。"
+            )
+    return issues
 
 
 def has_configured_key(value) -> bool:
@@ -56,7 +98,10 @@ def setup_issues(
     return issues
 
 
-def render_readiness(video_source: str, app_config, has_local_materials: bool, open_settings) -> None:
+def render_readiness(
+    video_source: str, app_config, has_local_materials: bool, open_settings,
+    *, uploaded_files=None, saved_materials=None,
+) -> bool:
     import streamlit as st
 
     provider = st.session_state.get("llm_provider_select") or app_config.get("llm_provider", "")
@@ -74,6 +119,11 @@ def render_readiness(video_source: str, app_config, has_local_materials: bool, o
         video_source, provider, app_config, executable=executable, logged_in=logged_in,
         has_local_materials=has_local_materials,
     )
+    material_issues = (
+        local_material_resolution_issues(uploaded_files, saved_materials)
+        if video_source == "local" else []
+    )
+    issues.extend(material_issues)
 
     heading = "生成前の確認：設定が必要です" if issues else "生成前の確認：基本設定OK"
     with st.expander(heading, expanded=bool(issues)):
@@ -89,3 +139,4 @@ def render_readiness(video_source: str, app_config, has_local_materials: bool, o
         if st.button("接続を再確認", key="mpt_readiness_refresh"):
             st.session_state.pop("mpt_codex_login_status", None)
             st.rerun()
+    return bool(material_issues)
