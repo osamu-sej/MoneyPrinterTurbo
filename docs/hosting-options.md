@@ -18,6 +18,16 @@
 
 Codexへの認証はMac mini上で行い、外出先のブラウザがCodexへ直接ログインする必要はない。TailscaleのログインはMac miniのWeb画面への接続を本人の端末に限定するための手段であり、Codex app-server自体の必須条件ではない。公式のリモートapp-server機能はCodexクライアント用であり、動画生成WebUIの公開や端末認証を代行しない。iPhoneからVPNアプリなしで使う場合は、WebUI用の別のHTTPS入口と本人限定のアクセス制御が必要になる。
 
+## 追加: 本人の端末からブラウザだけで使う入口（2026-10-21）
+
+本人のiPhone・WindowsでTailscaleアプリを起動する手間を省くため、Mac mini上の動画生成とCodexログインを維持したまま、別ポートに公開HTTPS入口を追加した。`scripts/install-macos-public-access.sh` は次を設定する。
+
+1. 公式配布のCaddy 2.11.7をSHA-512で照合し、Mac miniの `~/mpt/bin/caddy` に導入する。
+2. `127.0.0.1:8502` だけで待ち受けるCaddyをLaunchAgentで常駐させる。本人用の長いランダムキーを `~/mpt/home/public-access.key` に保存し、専用リンクを `~/mpt/home/public-access-link.txt` に保存する。両ファイルは本人だけが読める権限にする。キーはGit・plist・実行引数に書かない。
+3. Tailscale Funnelの8443番ポートからCaddyへ転送する。既存のtailnet限定Serve（443番ポート）は維持する。アクセスキーのないリクエストはCaddyが401で拒否し、専用リンクを開くとSecure／HttpOnly Cookieを設定して通常URLへ戻す。
+
+このMacでは、無害なテストページでFunnelが起動することを確認して停止した。その後、Caddyの401→302＋Cookie→認証済みプロキシをテストページで検証し、本番用Funnelを有効化した。`tailscale funnel status` で8443番ポートが公開、443番ポートがtailnet限定であることを確認した。公開URLでキーなし401、専用リンク302も確認した。iPhone実機のSafari表示と動画ダウンロードは未確認。公開停止は `tailscale funnel --https=8443 off`。Funnelには帯域制限があるため、大きい動画のダウンロード速度は実機で確認する。
+
 ### このMacでの受入結果（2026-10-20）
 
 - `~/mpt` と `~/Applications/MoneyPrinterTurbo.app` を導入し、`config.toml` のプロバイダーが `codex_app_server` であることを確認した。
@@ -29,7 +39,7 @@ Codexへの認証はMac mini上で行い、外出先のブラウザがCodexへ�
 - WebUIの日本語訳603件を導入し、既定言語を日本語に設定した。更新前から開いていた英語タブが再接続時に英語選択を再保存する問題は、保存済み言語を初回描画時に反映するパッチで修正した。
 - `launchctl` でWebUIの自動起動とローカル待ち受けを確認した。`tailscale serve --bg` でプライベートHTTPS転送を常駐させ、`tailscale serve status --json` でローカルWebUIへの転送を確認した。以前の接続試験ではtailnet内HTTPS URLの `/_stcore/health` がHTTP 200を返した。Windows端末からの接続は未確認。
 
-## 公開URLが必須の場合
+## Mac miniなしでクラウド単体で生成する場合
 
 Renderでの動画生成には少なくとも2GB級プランを候補とし、実動画でメモリ・時間・出力を測定する。素材取得用キー、LLM認証、永続保存（または生成直後のダウンロード）も必要。Codex app serverでChatGPTプランを使うにはリモートホスト向け利用資格と利用者認可を先に確認する。代わりにOpenAI API課金でCodexを認証する案は、別途APIキーと課金上限の設定が必要。現在のPRはRenderの認証やDockerに手を加えておらず、公開版はまだCodex移行済みではない。
 
@@ -40,4 +50,5 @@ Renderでの動画生成には少なくとも2GB級プランを候補とし、�
 - [OpenAI Sign in with ChatGPTの利用範囲](https://learn.chatgpt.com/cookbook/articles/sign-in-with-chatgpt#usage-policy-and-terms)
 - [Codex App Serverの認証とリモート接続](https://learn.chatgpt.com/docs/app-server)
 - [Tailscale Serve](https://tailscale.com/docs/reference/tailscale-cli/serve)
+- [Tailscale Funnel](https://tailscale.com/docs/reference/tailscale-cli/funnel)
 - [Tailscale pricing](https://tailscale.com/pricing)
