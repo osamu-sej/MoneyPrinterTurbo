@@ -14,9 +14,10 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "codex_overlay"))
 
 from mpt_codex.readiness import (
-    codex_logged_in, local_material_resolution_issues, setup_issues,
+    OPTIONAL_FEATURES, codex_logged_in, first_video_steps,
+    local_material_resolution_issues, needs_text_ai, setup_issues,
 )
-from mpt_codex.service_guide import VIDEO_GUIDES, VIDEO_NAMES, llm_guide
+from mpt_codex.service_guide import SECTION_INTROS, VIDEO_GUIDES, VIDEO_NAMES, llm_guide
 
 
 class SetupIssuesTests(unittest.TestCase):
@@ -51,6 +52,42 @@ class SetupIssuesTests(unittest.TestCase):
         self.assertEqual(len(issues), 1)
         self.assertIn("アップロード", issues[0])
 
+    def test_manual_script_and_local_material_do_not_require_ai_login(self):
+        self.assertFalse(needs_text_ai("自分で書いた台本", "", "local"))
+        issues = setup_issues(
+            "local", "codex_app_server", {}, executable=None, logged_in=False,
+            has_local_materials=True, needs_ai=False,
+        )
+        self.assertEqual(issues, [])
+        steps = first_video_steps(
+            subject="", script="自分で書いた台本", terms="", video_source="local",
+            provider="codex_app_server", app_config={}, executable=None,
+            logged_in=False, has_local_materials=True,
+        )
+        self.assertEqual([ready for _, ready, _ in steps], [True, True, True])
+        self.assertIn("呼び出しは不要", steps[1][2])
+        invalid_steps = first_video_steps(
+            subject="", script="自分で書いた台本", terms="", video_source="local",
+            provider="codex_app_server", app_config={}, executable=None,
+            logged_in=False, has_local_materials=True, local_material_valid=False,
+        )
+        self.assertFalse(invalid_steps[2][1])
+
+    def test_topic_only_needs_ai_and_selected_stock_key(self):
+        steps = first_video_steps(
+            subject="京都", script="", terms="", video_source="pexels",
+            provider="codex_app_server", app_config={}, executable=None,
+            logged_in=False, has_local_materials=False,
+        )
+        self.assertEqual([ready for _, ready, _ in steps], [True, False, False])
+        self.assertIn("Pexels", steps[2][2])
+
+    def test_optional_help_explains_effects(self):
+        self.assertGreaterEqual(len(OPTIONAL_FEATURES), 6)
+        for setting, effect in OPTIONAL_FEATURES:
+            self.assertTrue(setting)
+            self.assertTrue(effect)
+
     def test_login_check_fails_closed(self):
         with patch("mpt_codex.readiness.subprocess.run", side_effect=OSError):
             self.assertFalse(codex_logged_in("/usr/bin/codex"))
@@ -80,6 +117,10 @@ class SetupIssuesTests(unittest.TestCase):
 
 
 class ServiceGuideTests(unittest.TestCase):
+    def test_each_main_setting_has_beginner_explanation(self):
+        self.assertEqual(set(SECTION_INTROS), {"script", "video", "audio", "subtitle"})
+        self.assertTrue(all("最初" in text or "既定" in text for text in SECTION_INTROS.values()))
+
     def test_every_video_source_has_explanation_and_safe_link(self):
         self.assertEqual(set(VIDEO_GUIDES), set(VIDEO_NAMES))
         for source, guide in VIDEO_GUIDES.items():
@@ -107,24 +148,30 @@ class WebUIPatchTests(unittest.TestCase):
         video_guide_anchor = module["VIDEO_GUIDE_ANCHOR"]
         audio_guide_anchor = module["AUDIO_GUIDE_ANCHOR"]
         material_directory_anchor = module["MATERIAL_DIRECTORY_ANCHOR"]
+        section_anchors = module["SECTION_INTRO_ANCHORS"]
         patch_text = module["patch_text"]
         original = (
             f"before\n{tips_anchor}\n{region_anchor}\n{region_anchor}\n"
             f"{tips_anchor}\n{language_anchor}\n{llm_guide_anchor}"
             f"{material_directory_anchor}{video_guide_anchor}"
-            f"{audio_guide_anchor}{anchor}{button_anchor}after\n"
+            f"{audio_guide_anchor}{''.join(section_anchors.values())}"
+            f"{anchor}{button_anchor}after\n"
         )
         patched = patch_text(original)
         self.assertIn("render_readiness", patched)
+        self.assertIn("subject=params.video_subject, script=params.video_script, terms=params.video_terms", patched)
         self.assertIn("render_video_guide", patched)
         self.assertIn("render_llm_guide", patched)
         self.assertIn("render_tts_guide", patched)
         self.assertIn("render_material_directory", patched)
+        self.assertEqual(patched.count("render_section_intro("), 4)
         self.assertIn("disabled=local_resolution_blocked", patched)
         self.assertIn("_mpt_language_synced", patched)
         self.assertEqual(patched.count('"ja"} else "en"'), 2)
         self.assertEqual(patched.count('prefer_international=tips_language != "zh"'), 2)
         self.assertEqual(patch_text(patched), patched)
+        previous_insertion = module["PREVIOUS_INSERTION"]
+        self.assertIn("subject=params.video_subject", patch_text(original.replace(anchor, previous_insertion)))
         with self.assertRaises(ValueError):
             patch_text("unknown layout")
 

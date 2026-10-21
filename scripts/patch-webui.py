@@ -11,10 +11,15 @@ INSERTION = (
     "    from mpt_codex.readiness import render_readiness\n"
     "    local_resolution_blocked = render_readiness(\n"
     "        params.video_source, config.app, has_local_materials, _open_settings_dialog,\n"
+    "        subject=params.video_subject, script=params.video_script, terms=params.video_terms,\n"
     "        uploaded_files=uploaded_files,\n"
     "        saved_materials=st.session_state.get(\"local_video_materials\", []),\n"
     "    )\n\n"
     "    start_button = st.button(\n"
+)
+PREVIOUS_INSERTION = INSERTION.replace(
+    "        subject=params.video_subject, script=params.video_script, terms=params.video_terms,\n",
+    "",
 )
 OLD_INSERTION = (
     "    _render_settings_transfer(params)\n\n"
@@ -82,10 +87,24 @@ MATERIAL_DIRECTORY_INSERTION = (
     "            )\n"
     "            # 素材 Provider 按「搜索库存素材 / AI 生成视频 / AI 生成图片」\n"
 )
+SECTION_INTRO_ANCHORS = {
+    "script": '            st.write(tr("Video Script Settings"))\n',
+    "video": '            st.write(tr("Video Settings"))\n',
+    "audio": '            st.write(tr("Audio Settings"))\n',
+    "subtitle": '            st.write(tr("Subtitle Settings"))\n',
+}
+
+
+def section_intro_insertion(section: str, anchor: str) -> str:
+    return (
+        anchor
+        + "            from mpt_codex.service_guide import render_section_intro\n"
+        + f'            render_section_intro("{section}", st.session_state.get("ui_language", config.ui.get("language", "")))\n'
+    )
 
 
 def patch_text(source: str) -> str:
-    if sum(source.count(value) for value in (INSERTION, OLD_INSERTION, ANCHOR)) != 1:
+    if sum(source.count(value) for value in (INSERTION, PREVIOUS_INSERTION, OLD_INSERTION, ANCHOR)) != 1:
         raise ValueError("mpt WebUI layout changed; cannot place setup checklist")
     if source.count(BUTTON_INSERTION) != 1 and source.count(BUTTON_ANCHOR) != 1:
         raise ValueError("mpt WebUI layout changed; cannot block low-resolution material")
@@ -103,7 +122,13 @@ def patch_text(source: str) -> str:
     ):
         if source.count(new) != 1 and source.count(old) != 1:
             raise ValueError(f"mpt WebUI layout changed; cannot place {name}")
-    if source.count(OLD_INSERTION) == 1:
+    for section, anchor in SECTION_INTRO_ANCHORS.items():
+        insertion = section_intro_insertion(section, anchor)
+        if source.count(insertion) != 1 and source.count(anchor) != 1:
+            raise ValueError(f"mpt WebUI layout changed; cannot place {section} introduction")
+    if source.count(PREVIOUS_INSERTION) == 1:
+        source = source.replace(PREVIOUS_INSERTION, INSERTION, 1)
+    elif source.count(OLD_INSERTION) == 1:
         source = source.replace(OLD_INSERTION, INSERTION, 1)
     elif source.count(INSERTION) != 1:
         source = source.replace(ANCHOR, INSERTION, 1)
@@ -123,6 +148,10 @@ def patch_text(source: str) -> str:
     ):
         if source.count(new) != 1:
             source = source.replace(old, new, 1)
+    for section, anchor in SECTION_INTRO_ANCHORS.items():
+        insertion = section_intro_insertion(section, anchor)
+        if source.count(insertion) != 1:
+            source = source.replace(anchor, insertion, 1)
     return source
 
 

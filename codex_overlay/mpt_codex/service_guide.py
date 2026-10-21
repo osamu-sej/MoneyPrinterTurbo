@@ -92,6 +92,34 @@ TTS_CAPABILITIES = {
 }
 
 
+SECTION_INTROS = {
+    "script": (
+        "最初に必要：題材か台本のどちらか一方。題材だけなら文章AIが台本を作ります。"
+        "自分で台本を入力することもできます。細かな指示やモデル変更は後から調整できます。"
+    ),
+    "video": (
+        "最初に必要：映像素材を1種類選ぶこと。自分の画像・動画ならアップロードだけで使えます。"
+        "既存動画の検索サービスは選んだサービスのキー、新規AI素材は選んだサービスの設定や料金確認が必要です。"
+    ),
+    "audio": (
+        "声とBGMを変えると、聞こえ方と雰囲気が変わります。既定のEdge TTSはキー不要。"
+        "BGMは「なし」も選べます。別の音声・音楽サービスを使うときだけ接続を設定してください。"
+    ),
+    "subtitle": (
+        "字幕は読みやすさを調整するための設定です。最初は既定のままで始められます。"
+        "文字の形・位置・表示方法を変えたいときだけ調整してください。"
+    ),
+}
+
+
+def render_section_intro(section: str, language: str) -> None:
+    if language != "ja":
+        return
+    import streamlit as st
+
+    st.caption(SECTION_INTROS[section])
+
+
 def llm_guide(provider, endpoint=None) -> Guide:
     """Use the installed provider registry as the source for setup links."""
     if provider.provider_id == "codex_app_server":
@@ -154,7 +182,7 @@ def llm_guide(provider, endpoint=None) -> Guide:
 def _render_guide(guide: Guide, *, heading: str) -> None:
     import streamlit as st
 
-    lines = [f"**{heading}**", guide.capability, f"**準備**：{guide.setup}"]
+    lines = [f"**{heading}**", guide.capability, f"**この選択を使う場合の準備**：{guide.setup}"]
     if guide.links:
         lines.append("　·　".join(f"[{label}]({url})" for label, url in guide.links))
     st.info("\n\n".join(lines))
@@ -162,7 +190,7 @@ def _render_guide(guide: Guide, *, heading: str) -> None:
 
 def render_video_guide(source: str, language: str) -> None:
     if language == "ja" and source in VIDEO_GUIDES:
-        _render_guide(VIDEO_GUIDES[source], heading="この映像素材でできること")
+        _render_guide(VIDEO_GUIDES[source], heading="この映像素材を選ぶと何が変わる？")
 
 
 def render_material_directory(language: str) -> None:
@@ -170,8 +198,8 @@ def render_material_directory(language: str) -> None:
         return
     import streamlit as st
 
-    with st.expander("サービス別の用途と設定先", expanded=False):
-        st.caption("選んだ素材サービスのキーを下の欄に入力します。料金と利用条件は各サービスで確認してください。")
+    with st.expander("後から試せる映像素材サービス", expanded=False):
+        st.caption("一覧のサービスを全部設定する必要はありません。使う素材サービスを選んだときだけ、そのキーや料金を確認します。")
         for source, guide in VIDEO_GUIDES.items():
             if source == "local":
                 continue
@@ -184,16 +212,16 @@ def render_material_directory(language: str) -> None:
 
 def render_llm_guide(provider, endpoint, language: str) -> None:
     if language == "ja":
-        _render_guide(llm_guide(provider, endpoint), heading="この文章モデルでできること")
+        _render_guide(llm_guide(provider, endpoint), heading="文章モデルを変えると何が変わる？")
 
 
 def render_tts_guide(server: str, existing_tip: str, language: str) -> None:
     import streamlit as st
 
     if language == "ja" and server in TTS_CAPABILITIES:
-        lines = [f"**この音声サービスでできること**\n\n{TTS_CAPABILITIES[server]}"]
+        lines = [f"**この声を選ぶと何が変わる？**\n\n{TTS_CAPABILITIES[server]}"]
         if existing_tip:
-            lines.append(f"**準備**：{existing_tip}")
+            lines.append(f"**この声を使う場合の準備**：{existing_tip}")
         st.info("\n\n".join(lines))
     elif existing_tip:
         st.info(existing_tip)
