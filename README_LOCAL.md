@@ -6,6 +6,7 @@
 - **データ**: `~/mpt/home`（Win: `C:\mpt\home`）= `MPT_HOME`。設定 `config.toml`、生成動画 `storage/tasks/<task-id>/final-1.mp4`
 - **素材と音声**: WebUI「設定」で Pexels キーを入力。音声 Edge TTS（`azure-tts-v1`）・字幕 `edge` は既定のままでキー不要。Codexはテキスト生成を担当し、素材取得・音声・動画合成には既存の仕組みを使います。
 - **生成前の確認**: 「動画を生成」の直前にCodexのログイン、選択中の主要素材サービスのAPIキー、ローカル素材の有無を表示します。不足時は「設定を開く」から入力でき、「接続を再確認」でCodexの状態を更新できます。
+- **サービス選択の案内**: 文章モデル、映像素材、配音サービスの選択に合わせ、このアプリでの用途、必要な準備、サービスの設定先を日本語で表示します。「素材ソース設定」の「サービス別の用途と設定先」から候補を比較できます。モデルIDは各サービスの説明にある値を入力してください。外部サービスの料金と利用条件は実行前に確認してください。
 - **ローカル画像のサイズ**: 縦横とも480px以上の元画像を使ってください。小さな画像を選ぶと、生成前に実際の寸法を表示してボタンを無効にします。サムネイルの拡大では文字の判読性は改善しないため、元データをアップロードしてください。
 - **外出先から使うMac miniの設定**: `bash scripts/install-macos-launchagent.sh` でWebUIをログイン時に自動起動します。続けて `bash scripts/install-macos-public-access.sh` で、専用リンクを一度開けば以後ログイン操作なく使えるHTTPS入口を設定します。公開側はMacのローカルゲートウェイで本人のCookieを確認し、Tailscale Funnelの8443番ポートへ転送します。既存のtailnet限定Serve（443番ポート）も維持します。停止する場合は `tailscale funnel --https=8443 off` を実行します。
 - **Windowsからの利用**: Mac miniの `~/mpt/home/public-access-link.txt` に保存された専用リンクを本人のWindowsへ安全に転送し、ブラウザで最初に一度開きます。以後は `https://mac-mini.tail347817.ts.net:8443/` を開けます。WindowsへTailscaleを入れる必要はありません。Mac miniが起動・ログインしている必要があります。

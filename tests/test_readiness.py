@@ -4,6 +4,7 @@ import tempfile
 import unittest
 from io import BytesIO
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from PIL import Image
@@ -15,6 +16,7 @@ sys.path.insert(0, str(ROOT / "codex_overlay"))
 from mpt_codex.readiness import (
     codex_logged_in, local_material_resolution_issues, setup_issues,
 )
+from mpt_codex.service_guide import VIDEO_GUIDES, VIDEO_NAMES, llm_guide
 
 
 class SetupIssuesTests(unittest.TestCase):
@@ -77,6 +79,22 @@ class SetupIssuesTests(unittest.TestCase):
         self.assertIn("200×154px", issues[0])
 
 
+class ServiceGuideTests(unittest.TestCase):
+    def test_every_video_source_has_explanation_and_safe_link(self):
+        self.assertEqual(set(VIDEO_GUIDES), set(VIDEO_NAMES))
+        for source, guide in VIDEO_GUIDES.items():
+            self.assertTrue(guide.capability, source)
+            self.assertTrue(guide.setup, source)
+            for _, url in guide.links:
+                self.assertTrue(url.startswith("https://"), source)
+
+    def test_codex_setup_distinguishes_other_api_keys(self):
+        provider = SimpleNamespace(provider_id="codex_app_server")
+        guide = llm_guide(provider)
+        self.assertIn("codex login", guide.setup)
+        self.assertIn("別設定", guide.setup)
+
+
 class WebUIPatchTests(unittest.TestCase):
     def test_patch_is_idempotent_and_uses_exact_anchor(self):
         module = runpy.run_path(str(ROOT / "scripts" / "patch-webui.py"))
@@ -85,10 +103,23 @@ class WebUIPatchTests(unittest.TestCase):
         tips_anchor = module["TIPS_ANCHOR"]
         region_anchor = module["REGION_ANCHOR"]
         button_anchor = module["BUTTON_ANCHOR"]
+        llm_guide_anchor = module["LLM_GUIDE_ANCHOR"]
+        video_guide_anchor = module["VIDEO_GUIDE_ANCHOR"]
+        audio_guide_anchor = module["AUDIO_GUIDE_ANCHOR"]
+        material_directory_anchor = module["MATERIAL_DIRECTORY_ANCHOR"]
         patch_text = module["patch_text"]
-        original = f"before\n{tips_anchor}\n{region_anchor}\n{region_anchor}\n{tips_anchor}\n{language_anchor}\n{anchor}{button_anchor}after\n"
+        original = (
+            f"before\n{tips_anchor}\n{region_anchor}\n{region_anchor}\n"
+            f"{tips_anchor}\n{language_anchor}\n{llm_guide_anchor}"
+            f"{material_directory_anchor}{video_guide_anchor}"
+            f"{audio_guide_anchor}{anchor}{button_anchor}after\n"
+        )
         patched = patch_text(original)
         self.assertIn("render_readiness", patched)
+        self.assertIn("render_video_guide", patched)
+        self.assertIn("render_llm_guide", patched)
+        self.assertIn("render_tts_guide", patched)
+        self.assertIn("render_material_directory", patched)
         self.assertIn("disabled=local_resolution_blocked", patched)
         self.assertIn("_mpt_language_synced", patched)
         self.assertEqual(patched.count('"ja"} else "en"'), 2)

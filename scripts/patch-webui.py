@@ -38,6 +38,50 @@ TIPS_INSERTION = '    tips_language = ui_language if ui_language in {"zh", "en",
 REGION_ANCHOR = 'prefer_international=tips_language == "en"'
 REGION_INSERTION = 'prefer_international=tips_language != "zh"'
 MOBILE_STYLE_MARKER = "/* mpt-mobile-v1:"
+LLM_GUIDE_ANCHOR = "            tips = get_llm_provider_tips(llm_provider, **provider_tip_context)\n"
+LLM_GUIDE_INSERTION = (
+    "            from mpt_codex.service_guide import render_llm_guide\n"
+    "            with llm_helper:\n"
+    "                render_llm_guide(\n"
+    "                    llm_provider_spec, selected_service_endpoint,\n"
+    "                    st.session_state.get(\"ui_language\", config.ui.get(\"language\", \"\")),\n"
+    "                )\n\n"
+    + LLM_GUIDE_ANCHOR
+)
+VIDEO_GUIDE_ANCHOR = '            _set_runtime_config("app", "video_source", params.video_source)\n\n'
+VIDEO_GUIDE_INSERTION = (
+    VIDEO_GUIDE_ANCHOR
+    + "            from mpt_codex.service_guide import render_video_guide\n"
+    + "            render_video_guide(\n"
+    + "                params.video_source,\n"
+    + '                st.session_state.get("ui_language", config.ui.get("language", "")),\n'
+    + "            )\n\n"
+)
+AUDIO_GUIDE_ANCHOR = (
+    "            if tts_mode_enabled:\n"
+    "                provider_tips = get_tts_provider_tips(selected_tts_server)\n"
+    "                if provider_tips:\n"
+    "                    st.info(provider_tips)\n"
+)
+AUDIO_GUIDE_INSERTION = (
+    "            if tts_mode_enabled:\n"
+    "                provider_tips = get_tts_provider_tips(selected_tts_server)\n"
+    "                from mpt_codex.service_guide import render_tts_guide\n"
+    "                render_tts_guide(\n"
+    "                    selected_tts_server, provider_tips,\n"
+    '                    st.session_state.get("ui_language", config.ui.get("language", "")),\n'
+    "                )\n"
+)
+# The upstream comment is Chinese. Keep the exact first line as the stable anchor.
+MATERIAL_DIRECTORY_ANCHOR = "        with right_config_panel:\n            # 素材 Provider 按「搜索库存素材 / AI 生成视频 / AI 生成图片」\n"
+MATERIAL_DIRECTORY_INSERTION = (
+    "        with right_config_panel:\n"
+    "            from mpt_codex.service_guide import render_material_directory\n"
+    "            render_material_directory(\n"
+    '                st.session_state.get("ui_language", config.ui.get("language", ""))\n'
+    "            )\n"
+    "            # 素材 Provider 按「搜索库存素材 / AI 生成视频 / AI 生成图片」\n"
+)
 
 
 def patch_text(source: str) -> str:
@@ -51,6 +95,14 @@ def patch_text(source: str) -> str:
         raise ValueError("mpt WebUI layout changed; cannot enable Japanese provider tips")
     if source.count(REGION_INSERTION) != 2 and source.count(REGION_ANCHOR) != 2:
         raise ValueError("mpt WebUI layout changed; cannot preserve international endpoints")
+    for name, old, new in (
+        ("LLM guide", LLM_GUIDE_ANCHOR, LLM_GUIDE_INSERTION),
+        ("video guide", VIDEO_GUIDE_ANCHOR, VIDEO_GUIDE_INSERTION),
+        ("voice guide", AUDIO_GUIDE_ANCHOR, AUDIO_GUIDE_INSERTION),
+        ("material directory", MATERIAL_DIRECTORY_ANCHOR, MATERIAL_DIRECTORY_INSERTION),
+    ):
+        if source.count(new) != 1 and source.count(old) != 1:
+            raise ValueError(f"mpt WebUI layout changed; cannot place {name}")
     if source.count(OLD_INSERTION) == 1:
         source = source.replace(OLD_INSERTION, INSERTION, 1)
     elif source.count(INSERTION) != 1:
@@ -63,6 +115,14 @@ def patch_text(source: str) -> str:
         source = source.replace(TIPS_ANCHOR, TIPS_INSERTION)
     if source.count(REGION_INSERTION) != 2:
         source = source.replace(REGION_ANCHOR, REGION_INSERTION)
+    for old, new in (
+        (LLM_GUIDE_ANCHOR, LLM_GUIDE_INSERTION),
+        (VIDEO_GUIDE_ANCHOR, VIDEO_GUIDE_INSERTION),
+        (AUDIO_GUIDE_ANCHOR, AUDIO_GUIDE_INSERTION),
+        (MATERIAL_DIRECTORY_ANCHOR, MATERIAL_DIRECTORY_INSERTION),
+    ):
+        if source.count(new) != 1:
+            source = source.replace(old, new, 1)
     return source
 
 
