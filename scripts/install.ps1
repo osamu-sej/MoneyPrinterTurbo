@@ -1,5 +1,5 @@
 # Install MoneyPrinterTurbo (official PyPI package "mpt") into a dedicated venv and create a launcher (Windows).
-# Re-run to upgrade mpt. Install dir defaults to C:\mpt; override with $env:MPT_DIR.
+# Pin mpt==1.3.9 for Codex integration. Install dir defaults to C:\mpt; override with $env:MPT_DIR.
 # Keep this file ASCII-only: Windows PowerShell 5.1 reads BOM-less scripts in the ANSI code page.
 # Run: powershell -ExecutionPolicy Bypass -File scripts\install.ps1
 
@@ -41,9 +41,22 @@ if (-not (Test-Path $VenvPy)) {
     & $Py -m venv (Join-Path $MptDir '.venv')
     if ($LASTEXITCODE -ne 0) { Fail 'venv creation failed.' }
 }
-& $VenvPy -m pip install --upgrade pip mpt
+& $VenvPy -m pip install --upgrade pip 'mpt==1.3.9'
 if ($LASTEXITCODE -ne 0) { Fail 'pip install mpt failed.' }
 & (Join-Path $MptDir '.venv\Scripts\mpt.exe') --version
+& $VenvPy (Join-Path $PSScriptRoot 'install-locale.py')
+if ($LASTEXITCODE -ne 0) { Fail 'Japanese UI installation failed.' }
+
+$Overlay = Join-Path $MptDir 'codex_overlay'
+New-Item -ItemType Directory -Force -Path $Overlay | Out-Null
+Copy-Item -Path (Join-Path $PSScriptRoot '..\codex_overlay\*') -Destination $Overlay -Recurse -Force
+& $VenvPy (Join-Path $PSScriptRoot 'patch-webui.py')
+if ($LASTEXITCODE -ne 0) { Fail 'WebUI setup checklist installation failed.' }
+$env:MPT_HOME = Join-Path $MptDir 'home'
+$env:PYTHONPATH = $Overlay
+$env:MPT_CODEX_APP_SERVER = '1'
+& $VenvPy -c 'from app.config import config; config.app["llm_provider"] = "codex_app_server"; config.ui["language"] = "ja"; config.save_config()'
+if ($LASTEXITCODE -ne 0) { Fail 'Codex provider configuration failed.' }
 
 # Works without a system ffmpeg as long as the imageio-ffmpeg binary bundled with mpt runs
 & $VenvPy -c 'import imageio_ffmpeg, subprocess; subprocess.run([imageio_ffmpeg.get_ffmpeg_exe(), "-version"], check=True, capture_output=True)'
@@ -57,12 +70,19 @@ rem Start MoneyPrinterTurbo, or just open the browser if it is already running. 
 cd /d "%~dp0"
 set "MPT_HOME=%~dp0home"
 set PYTHONUTF8=1
+set "PYTHONPATH=%~dp0codex_overlay;%PYTHONPATH%"
+set "MPT_CODEX_APP_SERVER=1"
+where codex >nul 2>&1
+if not %errorlevel%==0 (
+  echo Codex CLI not found. Install Codex CLI and run codex login.
+  exit /b 1
+)
 curl -fsS http://127.0.0.1:8501/_stcore/health >nul 2>&1
 if %errorlevel%==0 (
   start "" http://127.0.0.1:8501
   exit /b 0
 )
-".venv\Scripts\mpt.exe" webui --port 8501
+".venv\Scripts\mpt.exe" webui --host 127.0.0.1 --port 8501
 '@ | Set-Content -Path $Bat -Encoding ASCII
 Write-Host "Launcher: $Bat"
 

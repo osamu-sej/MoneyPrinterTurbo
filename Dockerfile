@@ -18,7 +18,7 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends fonts-noto-cjk \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install mpt==1.3.8
+RUN pip install mpt==1.3.9
 
 COPY --from=caddy /caddy /usr/local/bin/caddy
 COPY deploy/ /app/deploy/

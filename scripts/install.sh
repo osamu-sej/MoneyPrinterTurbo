@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # MoneyPrinterTurbo（公式PyPIパッケージ mpt）を専用venvに導入し、起動ランチャーを作る（macOS / Linux）。
-# 再実行すると mpt を最新版に更新する。導入先は MPT_DIR で変更可（既定: ~/mpt）。
+# Codex連携と互換のある mpt==1.3.9 に固定する。導入先は MPT_DIR で変更可（既定: ~/mpt）。
 set -euo pipefail
 
 MPT_DIR="${MPT_DIR:-$HOME/mpt}"
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # 日本語・空白を含むパスは動作不良の原因になるため拒否する
 if printf '%s' "$MPT_DIR" | LC_ALL=C grep -q '[^A-Za-z0-9/._-]'; then
@@ -33,8 +34,18 @@ if [ ! -x "$MPT_DIR/.venv/bin/python" ]; then
   echo "venv を作成: $MPT_DIR/.venv（$("$PY" --version)）"
   "$PY" -m venv "$MPT_DIR/.venv"
 fi
-"$MPT_DIR/.venv/bin/python" -m pip install --upgrade pip mpt
+"$MPT_DIR/.venv/bin/python" -m pip install --upgrade pip 'mpt==1.3.9'
 echo "導入済み: $("$MPT_DIR/.venv/bin/mpt" --version)"
+"$MPT_DIR/.venv/bin/python" "$REPO_DIR/scripts/install-locale.py"
+
+mkdir -p "$MPT_DIR/codex_overlay"
+cp -R "$REPO_DIR/codex_overlay/." "$MPT_DIR/codex_overlay/"
+cp "$REPO_DIR/scripts/serve-private.sh" "$MPT_DIR/serve-private.sh"
+chmod +x "$MPT_DIR/serve-private.sh"
+"$MPT_DIR/.venv/bin/python" "$REPO_DIR/scripts/patch-webui.py"
+MPT_HOME="$MPT_DIR/home" PYTHONPATH="$MPT_DIR/codex_overlay" MPT_CODEX_APP_SERVER=1 \
+  "$MPT_DIR/.venv/bin/python" -c \
+  'from app.config import config; config.app["llm_provider"] = "codex_app_server"; config.ui["language"] = "ja"; config.save_config()'
 
 # システムに ffmpeg が無くても、mpt 同梱の imageio-ffmpeg で動くことを確認する
 "$MPT_DIR/.venv/bin/python" -c \
@@ -52,23 +63,32 @@ cat >"$LAUNCHER" <<'EOF'
 # MoneyPrinterTurbo を起動する。既に起動中ならブラウザで開くだけ。このウィンドウを閉じると停止する。
 cd "$(dirname "$0")" || exit 1
 export MPT_HOME="$PWD/home"
+export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
+export PYTHONPATH="$PWD/codex_overlay${PYTHONPATH:+:$PYTHONPATH}"
+export MPT_CODEX_APP_SERVER=1
+if ! command -v codex >/dev/null 2>&1; then
+  echo "Codex CLI が見つかりません。Codex CLI を導入し、codex login を実行してください。" >&2
+  exit 1
+fi
 URL="http://127.0.0.1:8501"
 if curl -fsS "$URL/_stcore/health" >/dev/null 2>&1; then
   if [ "$(uname)" = Darwin ]; then open "$URL"; else xdg-open "$URL"; fi
   exit 0
 fi
 ulimit -n 10240 2>/dev/null || true
-exec ./.venv/bin/mpt webui --port 8501
+exec ./.venv/bin/mpt webui --host 127.0.0.1 --port 8501
 EOF
 chmod +x "$LAUNCHER"
 echo "ランチャー: $LAUNCHER"
 
 if [ "$(uname)" = Darwin ]; then
-  APP="$HOME/Applications/MoneyPrinterTurbo.app"
-  mkdir -p "$HOME/Applications"
+  APP_DIR="${MPT_APP_DIR:-$HOME/Applications}"
+  APP="$APP_DIR/MoneyPrinterTurbo.app"
+  mkdir -p "$APP_DIR"
   rm -rf "$APP"
   osacompile -o "$APP" -e "do shell script \"open '$LAUNCHER'\""
-  echo "アプリ: $APP（Finder でこのアプリを Dock にドラッグすると常用できます）"
+  echo "アプリ: ${APP}（Finder でこのアプリを Dock にドラッグすると常用できます）"
 fi
 
 echo "データ保存先（MPT_HOME）: $MPT_DIR/home  生成動画: $MPT_DIR/home/storage/tasks/<task-id>/"
+echo "プライベート遠隔利用（Tailscale導入後）: bash $MPT_DIR/serve-private.sh"

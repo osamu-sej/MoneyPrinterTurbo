@@ -1,0 +1,23 @@
+{
+	admin off
+}
+
+# Tailscale Funnel terminates HTTPS; only Funnel can reach this loopback listener.
+http://:8502 {
+	bind 127.0.0.1
+
+	@login query key={$MPT_ACCESS_KEY}
+	handle @login {
+		header Set-Cookie "mpt_key={$MPT_ACCESS_KEY}; Path=/; Max-Age=31536000; HttpOnly; Secure; SameSite=Lax"
+		redir * / 302
+	}
+
+	@authorized header Cookie *mpt_key={$MPT_ACCESS_KEY}*
+	handle @authorized {
+		reverse_proxy 127.0.0.1:8501
+	}
+
+	handle {
+		respond "専用リンクから開いてください。" 401
+	}
+}
