@@ -14,13 +14,63 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "codex_overlay"))
 
 from mpt_codex.readiness import (
-    OPTIONAL_FEATURES, codex_logged_in, first_video_steps,
+    OPTIONAL_FEATURES, codex_logged_in, first_video_steps, render_readiness,
     local_material_resolution_issues, needs_text_ai, setup_issues,
 )
 from mpt_codex.service_guide import SECTION_INTROS, VIDEO_GUIDES, VIDEO_NAMES, llm_guide
 
 
 class SetupIssuesTests(unittest.TestCase):
+    def test_generate_button_only_blocks_known_prerequisite_failures(self):
+        class FakeStreamlit:
+            def __init__(self):
+                self.session_state = {"llm_provider_select": "codex_app_server"}
+
+            def container(self, **_kwargs):
+                return self
+
+            def expander(self, *_args, **_kwargs):
+                return self
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args):
+                return False
+
+            def markdown(self, *_args, **_kwargs):
+                pass
+
+            def caption(self, *_args, **_kwargs):
+                pass
+
+            def warning(self, *_args, **_kwargs):
+                pass
+
+            def button(self, *_args, **_kwargs):
+                return False
+
+        fake = FakeStreamlit()
+        with patch.dict(sys.modules, {"streamlit": fake}), patch(
+            "mpt_codex.readiness.shutil.which", return_value="/usr/bin/codex"
+        ), patch("mpt_codex.readiness.codex_logged_in", return_value=False):
+            self.assertTrue(render_readiness("local", {}, False, lambda: None, subject="京都"))
+            self.assertTrue(render_readiness("local", {}, True, lambda: None, subject="京都"))
+            self.assertTrue(render_readiness("local", {}, True, lambda: None, script=""))
+            self.assertFalse(render_readiness("local", {}, True, lambda: None, script="手入力の台本"))
+            self.assertTrue(render_readiness("pexels", {}, False, lambda: None, script="手入力の台本", terms="京都"))
+            self.assertFalse(render_readiness(
+                "pexels", {"pexels_api_keys": ["configured"]}, False,
+                lambda: None, script="手入力の台本", terms="京都",
+            ))
+            small_image = BytesIO()
+            Image.new("RGB", (200, 154)).save(small_image, format="PNG")
+            small_image.name = "thumbnail.png"
+            self.assertTrue(render_readiness(
+                "local", {}, True, lambda: None, script="手入力の台本",
+                uploaded_files=[small_image],
+            ))
+
     def test_missing_codex_login_and_pexels_key_are_actionable(self):
         issues = setup_issues(
             "pexels", "codex_app_server", {}, executable="/usr/bin/codex", logged_in=False
@@ -165,13 +215,17 @@ class WebUIPatchTests(unittest.TestCase):
         self.assertIn("render_tts_guide", patched)
         self.assertIn("render_material_directory", patched)
         self.assertEqual(patched.count("render_section_intro("), 4)
-        self.assertIn("disabled=local_resolution_blocked", patched)
+        self.assertIn("disabled=generation_blocked", patched)
         self.assertIn("_mpt_language_synced", patched)
         self.assertEqual(patched.count('"ja"} else "en"'), 2)
         self.assertEqual(patched.count('prefer_international=tips_language != "zh"'), 2)
         self.assertEqual(patch_text(patched), patched)
         previous_insertion = module["PREVIOUS_INSERTION"]
         self.assertIn("subject=params.video_subject", patch_text(original.replace(anchor, previous_insertion)))
+        current = patched.replace(module["INSERTION"], module["CURRENT_INSERTION"]).replace(
+            module["BUTTON_INSERTION"], module["CURRENT_BUTTON_INSERTION"]
+        )
+        self.assertEqual(patch_text(current), patched)
         with self.assertRaises(ValueError):
             patch_text("unknown layout")
 

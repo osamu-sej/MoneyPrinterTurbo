@@ -229,4 +229,4 @@ def render_readiness(
         st.caption("初回は表示中の値のまま進められます。変えたい効果があるときだけ調整してください。")
         for name, effect in OPTIONAL_FEATURES:
             st.markdown(f"**{name}**：{effect}")
-    return bool(material_issues)
+    return bool(issues)

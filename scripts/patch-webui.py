@@ -1,4 +1,4 @@
-"""Add the local setup checklist to the pinned mpt WebUI, idempotently."""
+"""Add the generation setup checklist to the pinned mpt WebUI, idempotently."""
 
 import sys
 from importlib.metadata import distribution
@@ -9,7 +9,7 @@ ANCHOR = "    _render_settings_transfer(params)\n\n    start_button = st.button(
 INSERTION = (
     "    _render_settings_transfer(params)\n\n"
     "    from mpt_codex.readiness import render_readiness\n"
-    "    local_resolution_blocked = render_readiness(\n"
+    "    generation_blocked = render_readiness(\n"
     "        params.video_source, config.app, has_local_materials, _open_settings_dialog,\n"
     "        subject=params.video_subject, script=params.video_script, terms=params.video_terms,\n"
     "        uploaded_files=uploaded_files,\n"
@@ -17,9 +17,13 @@ INSERTION = (
     "    )\n\n"
     "    start_button = st.button(\n"
 )
+CURRENT_INSERTION = INSERTION.replace("generation_blocked", "local_resolution_blocked")
 PREVIOUS_INSERTION = INSERTION.replace(
     "        subject=params.video_subject, script=params.video_script, terms=params.video_terms,\n",
     "",
+)
+CURRENT_PREVIOUS_INSERTION = PREVIOUS_INSERTION.replace(
+    "generation_blocked", "local_resolution_blocked"
 )
 OLD_INSERTION = (
     "    _render_settings_transfer(params)\n\n"
@@ -28,7 +32,8 @@ OLD_INSERTION = (
     "    start_button = st.button(\n"
 )
 BUTTON_ANCHOR = '        key="generate_video_button",\n        on_click=_prepare_generation_task,\n'
-BUTTON_INSERTION = BUTTON_ANCHOR + '        disabled=local_resolution_blocked,\n'
+BUTTON_INSERTION = BUTTON_ANCHOR + '        disabled=generation_blocked,\n'
+CURRENT_BUTTON_INSERTION = BUTTON_ANCHOR + '        disabled=local_resolution_blocked,\n'
 LANGUAGE_ANCHOR = '            selected_language_code = st.selectbox(\n                "Language / 语言",'
 LANGUAGE_INSERTION = (
     '            if not st.session_state.get("_mpt_language_synced"):\n'
@@ -104,10 +109,11 @@ def section_intro_insertion(section: str, anchor: str) -> str:
 
 
 def patch_text(source: str) -> str:
-    if sum(source.count(value) for value in (INSERTION, PREVIOUS_INSERTION, OLD_INSERTION, ANCHOR)) != 1:
+    if sum(source.count(value) for value in (INSERTION, CURRENT_INSERTION, PREVIOUS_INSERTION, CURRENT_PREVIOUS_INSERTION, OLD_INSERTION, ANCHOR)) != 1:
         raise ValueError("mpt WebUI layout changed; cannot place setup checklist")
-    if source.count(BUTTON_INSERTION) != 1 and source.count(BUTTON_ANCHOR) != 1:
-        raise ValueError("mpt WebUI layout changed; cannot block low-resolution material")
+    patched_buttons = source.count(BUTTON_INSERTION) + source.count(CURRENT_BUTTON_INSERTION)
+    if patched_buttons != 1 and not (patched_buttons == 0 and source.count(BUTTON_ANCHOR) == 1):
+        raise ValueError("mpt WebUI layout changed; cannot block incomplete setup")
     if source.count(LANGUAGE_INSERTION) != 1 and source.count(LANGUAGE_ANCHOR) != 1:
         raise ValueError("mpt WebUI layout changed; cannot preserve selected language")
     if source.count(TIPS_INSERTION) != 2 and source.count(TIPS_ANCHOR) != 2:
@@ -126,13 +132,19 @@ def patch_text(source: str) -> str:
         insertion = section_intro_insertion(section, anchor)
         if source.count(insertion) != 1 and source.count(anchor) != 1:
             raise ValueError(f"mpt WebUI layout changed; cannot place {section} introduction")
-    if source.count(PREVIOUS_INSERTION) == 1:
+    if source.count(CURRENT_INSERTION) == 1:
+        source = source.replace(CURRENT_INSERTION, INSERTION, 1)
+    elif source.count(CURRENT_PREVIOUS_INSERTION) == 1:
+        source = source.replace(CURRENT_PREVIOUS_INSERTION, INSERTION, 1)
+    elif source.count(PREVIOUS_INSERTION) == 1:
         source = source.replace(PREVIOUS_INSERTION, INSERTION, 1)
     elif source.count(OLD_INSERTION) == 1:
         source = source.replace(OLD_INSERTION, INSERTION, 1)
     elif source.count(INSERTION) != 1:
         source = source.replace(ANCHOR, INSERTION, 1)
-    if source.count(BUTTON_INSERTION) != 1:
+    if source.count(CURRENT_BUTTON_INSERTION) == 1:
+        source = source.replace(CURRENT_BUTTON_INSERTION, BUTTON_INSERTION, 1)
+    elif source.count(BUTTON_INSERTION) != 1:
         source = source.replace(BUTTON_ANCHOR, BUTTON_INSERTION, 1)
     if source.count(LANGUAGE_INSERTION) != 1:
         source = source.replace(LANGUAGE_ANCHOR, LANGUAGE_INSERTION, 1)
