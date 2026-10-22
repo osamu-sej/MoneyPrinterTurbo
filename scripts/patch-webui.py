@@ -135,6 +135,42 @@ TASK_ROW_INSERTION = (
     '                    render_failure_guidance(task, compact=True)\n\n\n'
     'def _render_task_manager_panel(tasks=None):\n'
 )
+EDIT_BUTTON_ANCHOR = (
+    '                if _task_state_filter_key(task) == "failed":\n'
+    '                    from mpt_codex.failure_guidance import render_failure_guidance\n'
+    '                    render_failure_guidance(task, compact=True)\n'
+)
+EDIT_BUTTON_INSERTION = (
+    '                if has_video:\n'
+    '                    if st.button("動画を手直し", key=f"edit_task_{key_prefix}_{task_id}", use_container_width=True):\n'
+    '                        st.session_state["video_edit_candidate_id"] = task_id\n'
+    '                        st.session_state["task_manager_popover_nonce"] = (\n'
+    '                            st.session_state.get("task_manager_popover_nonce", 0) + 1\n'
+    '                        )\n'
+    '                        st.rerun(scope="app")\n\n'
+    + EDIT_BUTTON_ANCHOR
+)
+EDIT_DIALOG_ANCHOR = (
+    '    if restore_candidate_id:\n'
+    '        _render_task_restore_dialog(restore_candidate_id)\n'
+)
+EDIT_DIALOG_INSERTION = (
+    EDIT_DIALOG_ANCHOR
+    + '    edit_candidate_id = st.session_state.get("video_edit_candidate_id")\n'
+    + '    if edit_candidate_id:\n'
+    + '        from mpt_codex.video_editor_ui import render_editor_dialog\n'
+    + '        render_editor_dialog(edit_candidate_id)\n'
+)
+EDIT_RESULT_ANCHOR = (
+    '    if state == const.TASK_STATE_COMPLETE:\n'
+    '        st.success(tr("Video Generation Completed"))\n'
+)
+EDIT_RESULT_INSERTION = (
+    EDIT_RESULT_ANCHOR
+    + '        if st.button("この動画を手直し", key=f"edit_current_{task_id}"):\n'
+    + '            st.session_state["video_edit_candidate_id"] = task_id\n'
+    + '            st.rerun(scope="app")\n'
+)
 
 
 def section_intro_insertion(section: str, anchor: str) -> str:
@@ -174,6 +210,8 @@ def patch_text(source: str) -> str:
         ("failure summary", TASK_SUMMARY_ANCHOR, TASK_SUMMARY_INSERTION),
         ("task row guidance", TASK_ROW_ANCHOR, TASK_ROW_INSERTION),
     ):
+        if name == "task row guidance" and source.count(EDIT_BUTTON_INSERTION) == 1:
+            continue
         if source.count(new) != 1 and source.count(old) != 1:
             raise ValueError(f"mpt WebUI layout changed; cannot place {name}")
     if source.count(CURRENT_INSERTION) == 1:
@@ -213,8 +251,20 @@ def patch_text(source: str) -> str:
         (TASK_SUMMARY_ANCHOR, TASK_SUMMARY_INSERTION),
         (TASK_ROW_ANCHOR, TASK_ROW_INSERTION),
     ):
+        if new == TASK_ROW_INSERTION and source.count(EDIT_BUTTON_INSERTION) == 1:
+            continue
         if source.count(new) != 1:
             source = source.replace(old, new, 1)
+    for name, old, new in (
+        ("edit button", EDIT_BUTTON_ANCHOR, EDIT_BUTTON_INSERTION),
+        ("edit dialog", EDIT_DIALOG_ANCHOR, EDIT_DIALOG_INSERTION),
+        ("edit result button", EDIT_RESULT_ANCHOR, EDIT_RESULT_INSERTION),
+    ):
+        if source.count(new) == 1:
+            continue
+        if source.count(old) != 1:
+            raise ValueError(f"mpt WebUI layout changed; cannot place {name}")
+        source = source.replace(old, new, 1)
     return source
 
 

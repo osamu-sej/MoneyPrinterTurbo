@@ -201,6 +201,8 @@ class WebUIPatchTests(unittest.TestCase):
         failed_task_anchor = module["FAILED_TASK_ANCHOR"]
         task_summary_anchor = module["TASK_SUMMARY_ANCHOR"]
         task_row_anchor = module["TASK_ROW_ANCHOR"]
+        edit_dialog_anchor = module["EDIT_DIALOG_ANCHOR"]
+        edit_result_anchor = module["EDIT_RESULT_ANCHOR"]
         section_anchors = module["SECTION_INTRO_ANCHORS"]
         patch_text = module["patch_text"]
         original = (
@@ -209,6 +211,7 @@ class WebUIPatchTests(unittest.TestCase):
             f"{material_directory_anchor}{video_guide_anchor}"
             f"{audio_guide_anchor}{''.join(section_anchors.values())}"
             f"{failed_task_anchor}{task_summary_anchor}{task_row_anchor}"
+            f"{edit_dialog_anchor}{edit_result_anchor}"
             f"{anchor}{button_anchor}after\n"
         )
         patched = patch_text(original)
@@ -220,6 +223,8 @@ class WebUIPatchTests(unittest.TestCase):
         self.assertIn("render_material_directory", patched)
         self.assertIn("render_failure_guidance(task)", patched)
         self.assertIn("render_failure_guidance(task, compact=True)", patched)
+        self.assertIn("render_editor_dialog(edit_candidate_id)", patched)
+        self.assertIn("動画を手直し", patched)
         self.assertIn('"failed_stage": task.get("failed_stage")', patched)
         self.assertEqual(patched.count("render_section_intro("), 4)
         self.assertIn("disabled=generation_blocked", patched)
