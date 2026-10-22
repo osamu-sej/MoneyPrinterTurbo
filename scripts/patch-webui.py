@@ -98,6 +98,43 @@ SECTION_INTRO_ANCHORS = {
     "audio": '            st.write(tr("Audio Settings"))\n',
     "subtitle": '            st.write(tr("Subtitle Settings"))\n',
 }
+FAILED_TASK_ANCHOR = (
+    '        error = str(task.get("error") or "").strip()\n'
+    '        message = tr("Video Generation Failed")\n'
+    '        st.error(f"{message}: {error}" if error else message)\n'
+)
+FAILED_TASK_INSERTION = (
+    "        from mpt_codex.failure_guidance import render_failure_guidance\n"
+    "        render_failure_guidance(task)\n"
+)
+TASK_SUMMARY_ANCHOR = (
+    '            "state": task.get("state"),\n'
+    '            "cross_post_state": task.get("cross_post_state"),\n'
+)
+TASK_SUMMARY_INSERTION = (
+    '            "state": task.get("state"),\n'
+    '            "failed_stage": task.get("failed_stage"),\n'
+    '            "error": task.get("error"),\n'
+    '            "remote_job_exists": any(task.get(key) for key in (\n'
+    '                "loomloom_run_id", "volcengine_seedance_task_id",\n'
+    '                "wavespeed_prediction_id", "ofox_task_id",\n'
+    '                "metaso_minimax_task_id", "muapi_task_id",\n'
+    '            )),\n'
+    '            "cross_post_state": task.get("cross_post_state"),\n'
+)
+TASK_ROW_ANCHOR = (
+    '                        else:\n'
+    '                            st.error(tr("Task Delete Failed"))\n\n\n'
+    'def _render_task_manager_panel(tasks=None):\n'
+)
+TASK_ROW_INSERTION = (
+    '                        else:\n'
+    '                            st.error(tr("Task Delete Failed"))\n\n'
+    '                if _task_state_filter_key(task) == "failed":\n'
+    '                    from mpt_codex.failure_guidance import render_failure_guidance\n'
+    '                    render_failure_guidance(task, compact=True)\n\n\n'
+    'def _render_task_manager_panel(tasks=None):\n'
+)
 
 
 def section_intro_insertion(section: str, anchor: str) -> str:
@@ -132,6 +169,13 @@ def patch_text(source: str) -> str:
         insertion = section_intro_insertion(section, anchor)
         if source.count(insertion) != 1 and source.count(anchor) != 1:
             raise ValueError(f"mpt WebUI layout changed; cannot place {section} introduction")
+    for name, old, new in (
+        ("failure guidance", FAILED_TASK_ANCHOR, FAILED_TASK_INSERTION),
+        ("failure summary", TASK_SUMMARY_ANCHOR, TASK_SUMMARY_INSERTION),
+        ("task row guidance", TASK_ROW_ANCHOR, TASK_ROW_INSERTION),
+    ):
+        if source.count(new) != 1 and source.count(old) != 1:
+            raise ValueError(f"mpt WebUI layout changed; cannot place {name}")
     if source.count(CURRENT_INSERTION) == 1:
         source = source.replace(CURRENT_INSERTION, INSERTION, 1)
     elif source.count(CURRENT_PREVIOUS_INSERTION) == 1:
@@ -164,6 +208,13 @@ def patch_text(source: str) -> str:
         insertion = section_intro_insertion(section, anchor)
         if source.count(insertion) != 1:
             source = source.replace(anchor, insertion, 1)
+    for old, new in (
+        (FAILED_TASK_ANCHOR, FAILED_TASK_INSERTION),
+        (TASK_SUMMARY_ANCHOR, TASK_SUMMARY_INSERTION),
+        (TASK_ROW_ANCHOR, TASK_ROW_INSERTION),
+    ):
+        if source.count(new) != 1:
+            source = source.replace(old, new, 1)
     return source
 
 

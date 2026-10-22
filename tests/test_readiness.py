@@ -198,6 +198,9 @@ class WebUIPatchTests(unittest.TestCase):
         video_guide_anchor = module["VIDEO_GUIDE_ANCHOR"]
         audio_guide_anchor = module["AUDIO_GUIDE_ANCHOR"]
         material_directory_anchor = module["MATERIAL_DIRECTORY_ANCHOR"]
+        failed_task_anchor = module["FAILED_TASK_ANCHOR"]
+        task_summary_anchor = module["TASK_SUMMARY_ANCHOR"]
+        task_row_anchor = module["TASK_ROW_ANCHOR"]
         section_anchors = module["SECTION_INTRO_ANCHORS"]
         patch_text = module["patch_text"]
         original = (
@@ -205,6 +208,7 @@ class WebUIPatchTests(unittest.TestCase):
             f"{tips_anchor}\n{language_anchor}\n{llm_guide_anchor}"
             f"{material_directory_anchor}{video_guide_anchor}"
             f"{audio_guide_anchor}{''.join(section_anchors.values())}"
+            f"{failed_task_anchor}{task_summary_anchor}{task_row_anchor}"
             f"{anchor}{button_anchor}after\n"
         )
         patched = patch_text(original)
@@ -214,6 +218,9 @@ class WebUIPatchTests(unittest.TestCase):
         self.assertIn("render_llm_guide", patched)
         self.assertIn("render_tts_guide", patched)
         self.assertIn("render_material_directory", patched)
+        self.assertIn("render_failure_guidance(task)", patched)
+        self.assertIn("render_failure_guidance(task, compact=True)", patched)
+        self.assertIn('"failed_stage": task.get("failed_stage")', patched)
         self.assertEqual(patched.count("render_section_intro("), 4)
         self.assertIn("disabled=generation_blocked", patched)
         self.assertIn("_mpt_language_synced", patched)
