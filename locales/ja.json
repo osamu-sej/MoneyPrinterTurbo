@@ -603,6 +603,19 @@
     "kimi_code.oauth.region_mismatch": "リージョン「{authorized}」でサインインしましたが、選択したAPI Platformは「{selected}」です。認証情報に合わせて「{authorized}」が使用されます。リージョンを切り替えるには、もう一度サインインしてください。",
     "kimi_code.oauth.network_error": "Kimi認証サービスに接続できませんでした（ネットワークエラー）。接続を確認してから、もう一度サインインを開始してください。",
     "kimi_code.oauth.changed": "別のページでサインイン状態が変更されました。この認証は停止しています。必要に応じて、もう一度サインインしてください。",
-    "kimi_code.oauth.poll_retry": "認証状態の確認中にネットワークエラーが発生しました。自動的に再試行しています…"
+    "kimi_code.oauth.poll_retry": "認証状態の確認中にネットワークエラーが発生しました。自動的に再試行しています…",
+    "Apply Logging Settings": "ログ設定を適用",
+    "Diagnostic Logging": "診断ログ",
+    "Diagnostic Logging Help": "変更はこのサービスと開いているすべてのブラウザ画面にすぐ反映されます。",
+    "Image Motion": "静止画像の動き",
+    "Image Motion Help": "静止画像にのみ適用します。動画クリップ間の切り替え効果は別に設定します。",
+    "Log Level": "ログの詳細度",
+    "Logging Settings Applied": "このサービスにログ設定を適用しました。",
+    "Slow Zoom": "ゆっくり拡大",
+    "Static Image": "動きなし",
+    "Trace API Requests": "APIリクエストの情報を記録",
+    "Trace API Requests Help": "ログの詳細度とは別の設定で、初期状態ではオフです。機密情報を除いたパラメータ、応答状態、所要時間を記録します。プロンプトの内容が見える場合があります。画像・音声などのデータと応答本文は記録しません。調査後はオフにしてください。",
+    "llm_provider_label.empiriolabs": "EmpirioLabs AI",
+    "llm_provider_tips.empiriolabs": "##### EmpirioLabs AIの設定\n- **APIキー**：[EmpirioLabs AIの画面]({api_key_url})で作成します\n- **ベースURL**：既定値は`{default_base_url}`です\n- **モデル名**：既定値は`{default_model}`です。別のモデルIDは[モデル一覧]({model_docs_url})で確認できます\n\nEmpirioLabs AIは、Qwen・DeepSeek・GLM・Kimi・MiniMaxなどのオープンモデルと独自モデルを使えるOpenAI互換APIです。"
   }
 }

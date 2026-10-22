@@ -1,1 +1,1 @@
-"""Codex app-server integration for MoneyPrinterTurbo 1.3.8."""
+"""Codex app-server integration for MoneyPrinterTurbo 1.3.9."""

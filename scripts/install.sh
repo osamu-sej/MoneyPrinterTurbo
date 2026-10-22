@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # MoneyPrinterTurbo（公式PyPIパッケージ mpt）を専用venvに導入し、起動ランチャーを作る（macOS / Linux）。
-# Codex連携と互換のある mpt==1.3.8 に固定する。導入先は MPT_DIR で変更可（既定: ~/mpt）。
+# Codex連携と互換のある mpt==1.3.9 に固定する。導入先は MPT_DIR で変更可（既定: ~/mpt）。
 set -euo pipefail
 
 MPT_DIR="${MPT_DIR:-$HOME/mpt}"
@@ -34,7 +34,7 @@ if [ ! -x "$MPT_DIR/.venv/bin/python" ]; then
   echo "venv を作成: $MPT_DIR/.venv（$("$PY" --version)）"
   "$PY" -m venv "$MPT_DIR/.venv"
 fi
-"$MPT_DIR/.venv/bin/python" -m pip install --upgrade pip 'mpt==1.3.8'
+"$MPT_DIR/.venv/bin/python" -m pip install --upgrade pip 'mpt==1.3.9'
 echo "導入済み: $("$MPT_DIR/.venv/bin/mpt" --version)"
 "$MPT_DIR/.venv/bin/python" "$REPO_DIR/scripts/install-locale.py"
 

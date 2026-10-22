@@ -1,4 +1,4 @@
-"""Install the bundled Japanese UI strings into the pinned mpt WebUI package."""
+"""Install the bundled Japanese UI strings into mpt 1.3.9's WebUI package."""
 
 import importlib.util
 import json

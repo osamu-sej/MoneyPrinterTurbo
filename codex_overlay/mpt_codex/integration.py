@@ -8,8 +8,8 @@ from .client import CodexError, generate
 def install():
     from app import __version__
 
-    if __version__ != "1.3.8":
-        raise RuntimeError("Codex integration requires mpt==1.3.8")
+    if __version__ != "1.3.9":
+        raise RuntimeError("Codex integration requires mpt==1.3.9")
 
     from app.models import llm_provider
 

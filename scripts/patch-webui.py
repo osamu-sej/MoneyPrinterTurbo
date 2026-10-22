@@ -164,8 +164,8 @@ def patch_style(source: str, mobile_style: str) -> str:
 
 
 def main() -> None:
-    if distribution("mpt").version != "1.3.8":
-        raise SystemExit("setup checklist requires mpt==1.3.8")
+    if distribution("mpt").version != "1.3.9":
+        raise SystemExit("setup checklist requires mpt==1.3.9")
     target = Path(distribution("mpt").locate_file("webui/Main.py"))
     source = target.read_text(encoding="utf-8")
     patched = patch_text(source)

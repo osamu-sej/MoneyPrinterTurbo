@@ -1,4 +1,4 @@
-"""Japanese, task-specific help for the provider selectors in mpt==1.3.8."""
+"""Japanese, task-specific help for the provider selectors in mpt==1.3.9."""
 
 from dataclasses import dataclass
 

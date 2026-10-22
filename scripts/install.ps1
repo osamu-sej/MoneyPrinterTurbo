@@ -1,5 +1,5 @@
 # Install MoneyPrinterTurbo (official PyPI package "mpt") into a dedicated venv and create a launcher (Windows).
-# Pin mpt==1.3.8 for Codex integration. Install dir defaults to C:\mpt; override with $env:MPT_DIR.
+# Pin mpt==1.3.9 for Codex integration. Install dir defaults to C:\mpt; override with $env:MPT_DIR.
 # Keep this file ASCII-only: Windows PowerShell 5.1 reads BOM-less scripts in the ANSI code page.
 # Run: powershell -ExecutionPolicy Bypass -File scripts\install.ps1
 
@@ -41,7 +41,7 @@ if (-not (Test-Path $VenvPy)) {
     & $Py -m venv (Join-Path $MptDir '.venv')
     if ($LASTEXITCODE -ne 0) { Fail 'venv creation failed.' }
 }
-& $VenvPy -m pip install --upgrade pip 'mpt==1.3.8'
+& $VenvPy -m pip install --upgrade pip 'mpt==1.3.9'
 if ($LASTEXITCODE -ne 0) { Fail 'pip install mpt failed.' }
 & (Join-Path $MptDir '.venv\Scripts\mpt.exe') --version
 & $VenvPy (Join-Path $PSScriptRoot 'install-locale.py')

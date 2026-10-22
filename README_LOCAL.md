@@ -1,5 +1,7 @@
 # MoneyPrinterTurbo ローカル運用メモ
 
+Mac miniの導入版は公式 `mpt==1.3.9`（2026-10-22更新）。静止画像の動きの選択、音声・字幕・画像処理の修正などを含みます。変更の詳細は[公式リリース](https://github.com/harry0703/MoneyPrinterTurbo/releases/tag/v1.3.9)を参照してください。
+
 ## 最初の1本を作る
 
 1. **題材を入力**します。例：「秋の京都を30秒で紹介」。台本を自分で入力する方法もあります。題材だけなら文章AIが台本を作ります。
@@ -22,7 +24,7 @@
 
 画面の「最初の1本：確認するのは3つだけ」で現在の選択に必要な項目を確認できます。「仕上がりを変える設定」には設定ごとの効果を表示します。
 
-- **導入/更新**: macOS・Linux `bash scripts/install.sh` → `~/mpt`／Windows `powershell -ExecutionPolicy Bypass -File scripts\install.ps1` → `C:\mpt`。互換性確認済みの公式 `mpt==1.3.8` を専用venvへ導入し、画面を日本語に設定します。
+- **導入/更新**: macOS・Linux `bash scripts/install.sh` → `~/mpt`／Windows `powershell -ExecutionPolicy Bypass -File scripts\install.ps1` → `C:\mpt`。互換性確認済みの公式 `mpt==1.3.9` を専用venvへ導入し、画面を日本語に設定します。
 - **AI生成**: ローカル版は `Codex app server (ChatGPT login)` を既定のLLMとして設定します。事前に [Codex CLI](https://learn.chatgpt.com/docs/app-server) を導入して `codex login` を完了してください。動画の台本、素材検索語、投稿文案の生成時に、ログイン済みのCodex app serverへ接続します。モデル名を空欄にすると、app serverが示す既定モデルを選びます。Codexの利用枠が適用されます。
 - **手動起動**: macOS `~/Applications/MoneyPrinterTurbo.app`（Dockに置く）／Windows デスクトップの `MoneyPrinterTurbo`（タスクバーにピン留め可）→ http://127.0.0.1:8501 。手動起動したターミナルを閉じると停止
 - **データ**: `~/mpt/home`（Win: `C:\mpt\home`）= `MPT_HOME`。設定 `config.toml`、生成動画 `storage/tasks/<task-id>/final-1.mp4`

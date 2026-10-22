@@ -14,7 +14,7 @@ MATERIAL_KEYS = {
     "coverr": ("coverr_api_keys", "Coverr"),
     "wavespeed": ("wavespeed_api_keys", "WaveSpeed"),
 }
-MIN_LOCAL_MATERIAL_EDGE = 470  # mpt==1.3.8 allows 10px tolerance below 480px.
+MIN_LOCAL_MATERIAL_EDGE = 470  # mpt==1.3.9 allows 10px tolerance below 480px.
 LOCAL_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp"}
 
 
