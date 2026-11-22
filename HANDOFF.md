@@ -17,7 +17,7 @@ Render に free プランでデプロイ・起動済み。動画の書き出し�
 
 ## 📌 環境・確定制約
 - repo `osamu-sej/MoneyPrinterTurbo`：全コードは `main`（PR #1〜#3 マージ済み）。GitHub の既定ブランチはまだ `claude/lucid-wright-09s5m7`
-- アプリ本体は公式 PyPI `mpt==1.3.8`（PyPI の `MoneyPrinterTurbo` は第三者製）。WebUI に日本語表示なし
+- アプリ本体は公式 PyPI `mpt==1.3.10`（PyPI の `MoneyPrinterTurbo` は第三者製）。WebUI に日本語表示なし
 - Render：service `moneyprinterturbo`（`srv-dbb7uc2jnfac738bl02g`、workspace `tea-d58srcili9vc73a92jog`）、singapore、Docker、`main` へのコミットで自動デプロイ、URL https://moneyprinterturbo-he71.onrender.com
 - 入場：`/?key=<MPT_ACCESS_KEY>` を一度開くと Cookie（1年）。キーの値は Render の Environment にだけある
 - Render の環境変数：設定済み `MPT_ACCESS_KEY` `LLM_PROVIDER=gemini` `LLM_MODEL=gemini-3.5-flash-lite`／未設定 `LLM_API_KEY` `PEXELS_API_KEY`（起動時に `deploy/seed_config.py` が config.toml へ書き込む。ディスクは再起動で消える）
